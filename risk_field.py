@@ -33,11 +33,11 @@ def torus_a(arc_len, par1, dla):
     return a
 
 
-def torus_meshgrid(xv, yv, dla, res):
-    xbl = xv
-    xbu = xv + dla
-    ybl = yv - dla
-    ybu = yv + dla
+def torus_meshgrid(range, res):
+    xbl = 0
+    xbu = range[0]
+    ybl = 0
+    ybu = range[1]
     grid_x = np.arange(xbl, xbu, res)
     grid_y = np.arange(ybl, ybu, res)
     X, Y = np.meshgrid(grid_x, grid_y)
@@ -98,8 +98,8 @@ xv = 0
 yv = 0
 
 ## Car States
-v = 10 # speed
-phi = 0 # heading angle
+v = 5 # speed
+
 steer_angle = 0 # steering angle
 
 ## DRF parameters
@@ -111,14 +111,14 @@ kexp2 = 5 * 0.5 # outside circle
 cexp = 1
 dla = 50 # perception size
 
-def gen_risk_field():
+def gen_risk_field(range, res, phi):
     delta_fut_h = (np.pi / 180) *  steer_angle / Sr
     phiv_a = (np.pi / 180) * phi
     delta = torus_delta(delta_fut_h) # steering angle
     phiv = torus_phiv(phiv_a) #
     R = torus_R(L,delta) # arc radius
     xc, yc = torus_xcyc(xv,yv,phiv,delta,R)
-    X, Y, xbl, xbu, ybl, ybu = torus_meshgrid(xv,yv, dla, res)
+    X, Y, xbl, xbu, ybl, ybu = torus_meshgrid(range, res)
     arc_len = torus_arclen(X,Y,xv,yv,delta,xc,yc,R)
     a = torus_a(arc_len, par1, dla)
     sigma_1, sigma_2 = torus_sigma(arc_len, kexp1, kexp2, mcexp, delta, cexp)
@@ -126,22 +126,26 @@ def gen_risk_field():
     return X, Y, Z
 
 
-X, Y, Z = gen_risk_field()
-# perception_list = [([[-dla, -20], [-dla, dla]], -5), ([[20, dla], [-dla, dla]], -5), ([[-10, 10], [-dla, dla]], 10)]
-perception_list = [([[-dla, -20], [0, dla]], -5), ([[20, dla], [0, dla]], -5)]
+if __name__ == '__main__':
+    pcpt_range = (20, 20)
+    pcpt_res = 1
 
-cost_map = gen_cost_map(perception_list, dla, res)
-risk_map = np.multiply(Z, cost_map)
+    X, Y, Z = gen_risk_field(pcpt_range, pcpt_res)
+    # perception_list = [([[-dla, -20], [-dla, dla]], -5), ([[20, dla], [-dla, dla]], -5), ([[-10, 10], [-dla, dla]], 10)]
+    perception_list = [([[-dla, -20], [0, dla]], -5), ([[20, dla], [0, dla]], -5)]
 
-fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-surf = ax.plot_surface(X, Y, risk_map, cmap=cm.coolwarm, linewidth = 0, antialiased = False)
-plt.show()
+    cost_map = gen_cost_map(perception_list, dla, res)
+    risk_map = np.multiply(Z, cost_map)
 
-policy_iter = PolicyIteration((20, 10), risk_map)
-optimal_policy = policy_iter.run()
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_surface(X, Y, risk_map, cmap=cm.coolwarm, linewidth = 0, antialiased = False)
+    plt.show()
 
-# print("Optimal Policy:")
-# print(optimal_policy)
+    policy_iter = PolicyIteration(pcpt_range, risk_map, discount_factor =1.0)
+    optimal_policy = policy_iter.run()
+
+    # print("Optimal Policy:")
+    # print(optimal_policy)
 
 
 

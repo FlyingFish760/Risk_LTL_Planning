@@ -38,7 +38,7 @@ class PolicyIteration:
                     next_state = self.get_next_state((i, j), action)
                     reward = self.weights[next_state]
                     new_value_function[i, j] = reward + self.discount_factor * self.value_function[next_state]
-            if np.max(np.abs(new_value_function - self.value_function)) < 1e-4:
+            if np.max(np.abs(new_value_function - self.value_function)) < 1e-3:
                 break
             self.value_function = new_value_function
 
@@ -61,9 +61,6 @@ class PolicyIteration:
                 self.policy[i, j] = best_action
                 if old_action != best_action:
                     policy_stable = False
-
-        print("Policy:")
-        print(self.policy)
 
         return policy_stable
 
