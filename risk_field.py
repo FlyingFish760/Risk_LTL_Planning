@@ -144,8 +144,6 @@ if __name__ == '__main__':
     policy_iter = PolicyIteration(pcpt_range, risk_map, discount_factor =1.0)
     optimal_policy = policy_iter.run()
 
-    # print("Optimal Policy:")
-    # print(optimal_policy)
 
 
 

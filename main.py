@@ -1,6 +1,7 @@
 # author: Shuhao Qi
 # Email: s.qi@tue.nl
 # Date: August 6nd, 2023
+
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
@@ -10,9 +11,6 @@ import sim.perception as pept
 import sim.simulator as sim
 import risk_field as rf
 from policy_iteration import PolicyIteration
-
-
-
 
 
 def main():
@@ -42,7 +40,6 @@ def main():
         ax_1.cla()
         ax_2.cla()
         ax_1.set_aspect(1)
-
         car_pos = car_state[:2]
 
         pcpt_dic = pept.gen_pcpt_dic(road_size, square_obs)
