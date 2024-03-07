@@ -9,16 +9,16 @@ import numpy as np
 from sim.visualizer import Visualizer
 import sim.perception as pept
 import sim.simulator as sim
-import risk_field as rf
-from policy_iteration import PolicyIteration
+import risk_field.risk_field as rf
+from risk_field.policy_iteration import PolicyIteration
 
 
 def main():
 
     # ---------- Environment Setting ---------------------
-    road_size = [12, 80]
-    square_obs = [-6, 30, 6, 10]
-    params = {"dt": 0.05, "WB": 3.5}
+    road_size = [12, 120]
+    square_obs_list = [[-6, 20, 6, 10], [0, 50, 6, 10]]
+    params = {"dt": 0.1, "WB": 3.5}
     car_state = np.array([0, 0, np.pi/2])
 
     # ---------- Realtime States ---------------------
@@ -31,9 +31,9 @@ def main():
     ax_3 = fig.add_subplot(grid[1, 1])
     ax_3.axis('off')
 
-    vis = Visualizer(ax_1, road_size, square_obs)
+    vis = Visualizer(ax_1, road_size, square_obs_list)
     pcpt_range = (30, 20)
-    pcpt_res = 1
+    pcpt_res = (1, 1)
 
     while True:
 
@@ -42,9 +42,8 @@ def main():
         ax_1.set_aspect(1)
         car_pos = car_state[:2]
 
-        pcpt_dic = pept.gen_pcpt_dic(road_size, square_obs)
+        pcpt_dic = pept.gen_pcpt_dic(road_size, square_obs_list)
         cost_map = pept.gen_cost_map(pcpt_dic, car_pos, pcpt_range, pcpt_res)
-
         X, Y, Z = rf.gen_risk_field(pcpt_range, pcpt_res, -car_state[2] + np.pi/2)
         risk_map = np.multiply(Z.transpose(), cost_map)
 
@@ -55,13 +54,12 @@ def main():
         vis.plot_car(car_pos[0], car_pos[1], car_state[2], 0)
         ax_2.plot_surface(X, Y, risk_map.transpose(), cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
-        policy_iter = PolicyIteration(pcpt_range, risk_map, discount_factor=0.8)
+        policy_iter = PolicyIteration(risk_map, discount_factor=0.8)
         optimal_policy = policy_iter.run()
-        action = optimal_policy[int(pcpt_range[0]/2)+1, 0]
+        action = optimal_policy[int(pcpt_range[0]/(2 * pcpt_res[0]))+1, 0]
         print("action:", action)
-        car_state = sim.update(car_state, action, params)
+        car_state = sim.update_2(car_state, action, params)
         print("state:", car_state)
-
         plt.pause(0.01)
 
 

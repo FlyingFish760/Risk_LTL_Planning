@@ -25,9 +25,9 @@ class Car_Para:
 
 class Visualizer:
 
-    def __init__(self, ax, road_size, square_obs):
+    def __init__(self, ax, road_size, square_obs_list):
         self.road_size = road_size
-        self.square_obs = square_obs
+        self.square_obs_list = square_obs_list
         self.ax = ax
 
     def plot_all(self, ax):
@@ -46,9 +46,9 @@ class Visualizer:
         self.ax.plot(line_x, line_y, '-.', color='black')
 
     def plot_obstacle(self):
-        rect = plt.Rectangle((self.square_obs[0], self.square_obs[1]), self.square_obs[2],
-                             self.square_obs[3], color='red')
-        self.ax.add_patch(rect)
+        for obs in self.square_obs_list:
+            rect = plt.Rectangle((obs[0], obs[1]), obs[2], obs[3], color='red')
+            self.ax.add_patch(rect)
 
     def plot_perception(self, pos, range):
         rect = plt.Rectangle((pos[0] - range[0]/2, pos[1]), range[0], range[1], color='grey', alpha=0.5)

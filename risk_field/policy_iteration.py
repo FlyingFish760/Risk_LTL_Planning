@@ -2,13 +2,13 @@ import numpy as np
 
 
 class PolicyIteration:
-    def __init__(self, shape, weights=None, discount_factor=0.9):
-        self.shape = shape
-        self.weights = weights if weights is not None else np.zeros(shape)
+    def __init__(self, risk_field, discount_factor=0.9):
+        self.shape = np.shape(risk_field)
+        self.weights = risk_field
         self.discount_factor = discount_factor
         self.actions = ['-2', '-1', '0', '1', '2']
-        self.value_function = np.zeros(shape)
-        self.policy = np.random.choice(self.actions, shape)
+        self.value_function = np.zeros(self.shape)
+        self.policy = np.random.choice(self.actions, self.shape)
 
     def in_local_environment(self, state):
         return ((state[0] in range(self.shape[0]-1)) and (state[1] in range(self.shape[1]-1)))

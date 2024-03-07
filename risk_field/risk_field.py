@@ -2,7 +2,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from policy_iteration import PolicyIteration
+from risk_field.policy_iteration import PolicyIteration
 
 
 def torus_delta(delta_a):
@@ -38,10 +38,10 @@ def torus_meshgrid(range, res):
     xbu = range[0]
     ybl = 0
     ybu = range[1]
-    grid_x = np.arange(xbl, xbu, res)
-    grid_y = np.arange(ybl, ybu, res)
+    grid_x = np.arange(xbl, xbu, res[0])
+    grid_y = np.arange(ybl, ybu, res[1])
     X, Y = np.meshgrid(grid_x, grid_y)
-    return X, Y, xbl, xbu, ybl, ybu
+    return X, Y
 
 def torus_phiv(phiv_a):
     pi2temp = np.ceil(abs(phiv_a / 2 * np.pi)) # how many rotations (for e.g. 6 * pi / 2 * pi = 3)
@@ -118,7 +118,7 @@ def gen_risk_field(range, res, phi):
     phiv = torus_phiv(phiv_a) #
     R = torus_R(L,delta) # arc radius
     xc, yc = torus_xcyc(xv,yv,phiv,delta,R)
-    X, Y, xbl, xbu, ybl, ybu = torus_meshgrid(range, res)
+    X, Y = torus_meshgrid(range, res)
     arc_len = torus_arclen(X,Y,xv,yv,delta,xc,yc,R)
     a = torus_a(arc_len, par1, dla)
     sigma_1, sigma_2 = torus_sigma(arc_len, kexp1, kexp2, mcexp, delta, cexp)
@@ -131,7 +131,6 @@ if __name__ == '__main__':
     pcpt_res = 1
 
     X, Y, Z = gen_risk_field(pcpt_range, pcpt_res)
-    # perception_list = [([[-dla, -20], [-dla, dla]], -5), ([[20, dla], [-dla, dla]], -5), ([[-10, 10], [-dla, dla]], 10)]
     perception_list = [([[-dla, -20], [0, dla]], -5), ([[20, dla], [0, dla]], -5)]
 
     cost_map = gen_cost_map(perception_list, dla, res)
