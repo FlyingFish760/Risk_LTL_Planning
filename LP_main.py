@@ -39,6 +39,7 @@ def main():
     pcpt_res = (2, 5)
 
     X, Y =  rf.torus_meshgrid(pcpt_range, pcpt_res)
+    plt.pause(5)
 
     while True:
 
