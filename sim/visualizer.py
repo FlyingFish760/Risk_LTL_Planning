@@ -37,7 +37,6 @@ class Visualizer:
     def plot_boundary_lines(self):
 
         line_y = [n for n in range(self.road_size[1]+1)]
-
         line_x = - np.ones(len(line_y)) * self.road_size[0] / 2
         self.ax.plot(line_x, line_y, '-', color='black')
         line_x = np.ones(len(line_y)) * self.road_size[0] / 2

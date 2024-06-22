@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 import gurobipy as grb
 import numpy as np
-
+from model.MDP import MDP
 
 class Abstraction:
 
-    def __init__(self, map_range, map_res):
+    def __init__(self, map_range, map_res, initial_position=(0, 0), label):
         self.map_res = map_res
         self.map_shape = None
-        self.state_set = self.abs_state(map_range, map_res)
-        self.action_set = self.abs_action()
+        state_set = self.abs_state(map_range, map_res)
+        action_set = self.abs_action()
+        transition = self.trans_matrix()
+        self.MDP = MDP(state_set, action_set, transition, None, None)
 
     def abs_state(self, map_range, map_res):
         xbl = 0
@@ -28,7 +30,7 @@ class Abstraction:
         A, B = np.meshgrid(vx_set, vy_set)
         return np.array([A.flatten(), B.flatten()]).T
 
-    def linear(self):
+    def trans_matrix(self):
         # based on single integrator
         P = None
         for n in range(len(self.action_set)):
@@ -36,14 +38,14 @@ class Abstraction:
             for i in range(len(self.state_set)):
                 position = (i % self.map_shape[0], int(i / self.map_shape[0]))
                 action = self.action_set[n]
-                P_a_s = self.transition(position, action)
+                P_a_s = self.trans_func(position, action)
                 P_a = np.vstack((P_a, P_a_s)) if P_a is not None else P_a_s
             P_a = np.expand_dims(P_a, axis=0)
             P = np.vstack((P, P_a)) if P is not None else P_a
         return P
 
 
-    def transition(self, position, action):
+    def trans_func(self, position, action):
         def action_prob(action):
             if action == -2:
                 prob = np.array([0.8, 0.2, 0.0, 0.0, 0.0])
@@ -67,14 +69,12 @@ class Abstraction:
             for n in range(len(prob_y)):
                 if (0 <= position[0] + m - 2 <= self.map_shape[0] -1) and (0 <= position[1] + n - 2 <= self.map_shape[1]-1):
                     P_sn[position[0] + m - 2, position[1] + n - 2] = prob_map[m, n]
-
         return P_sn.flatten(order='F')
 
 
-
 if __name__ == '__main__':
-    pcpt_range = (14, 20)
-    pcpt_res = 2
+    pcpt_range = (18, 25)
+    pcpt_res = (2, 5)
     dt = 1
     abs_model = Abstraction(pcpt_range, pcpt_res)
     P_sn = abs_model.transition((3, 0), (-1, 2))

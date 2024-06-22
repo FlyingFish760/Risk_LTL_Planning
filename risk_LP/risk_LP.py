@@ -2,7 +2,6 @@
 import gurobipy as grb
 import numpy as np
 
-
 class RiskLP:
 
     def __init__(self):
