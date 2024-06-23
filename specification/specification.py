@@ -19,7 +19,7 @@ class LTL_Spec:
         dfa_graph = self.to_network(dfa_dot)
 
         edges_info = {edge: dfa_graph.edges[edge] for edge in dfa_graph.edges}
-        state_set = list(dfa_graph.nodes).remove('init')
+        state_set = [*range(1, len(dfa_graph.nodes))]
         alphabet_set = []
         transitions_set = {}
         sink_states = []

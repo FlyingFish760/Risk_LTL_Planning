@@ -5,15 +5,20 @@ from model.MDP import MDP
 
 class Abstraction:
 
-    def __init__(self, map_range, map_res, initial_position=(0, 0), label):
+    def __init__(self, map_range, map_res, initial_position, label_function):
         self.map_res = map_res
         self.map_shape = None
-        state_set = self.abs_state(map_range, map_res)
-        action_set = self.abs_action()
-        transition = self.trans_matrix()
-        self.MDP = MDP(state_set, action_set, transition, None, None)
+        self.state_set = self.gen_abs_state(map_range, map_res)
+        self.action_set = self.gen_abs_action()
+        trans_matrix = self.gen_transitions()
+        label_map = self.gen_labels(label_function)
+        init_abs_state = [initial_position[0]//self.map_res[0], initial_position[1]//self.map_res[1]]
+        initial_state = self.get_state_index(init_abs_state)
+        state_index_set = np.arange(len(self.state_set))
+        action_index_set = np.arange(len(self.action_set))
+        self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state)
 
-    def abs_state(self, map_range, map_res):
+    def gen_abs_state(self, map_range, map_res):
         xbl = 0
         xbu = map_range[0]
         ybl = 0
@@ -24,13 +29,14 @@ class Abstraction:
         self.map_shape = (len(grid_x), len(grid_y))
         return np.array([X.flatten(), Y.flatten()]).T
 
-    def abs_action(self):
+
+    def gen_abs_action(self):
         vx_set = np.array([-2, -1, 0, 1, 2])
         vy_set = np.array([-2, -1, 0, 1, 2])
         A, B = np.meshgrid(vx_set, vy_set)
         return np.array([A.flatten(), B.flatten()]).T
 
-    def trans_matrix(self):
+    def gen_transitions(self):
         # based on single integrator
         P = None
         for n in range(len(self.action_set)):
@@ -44,6 +50,26 @@ class Abstraction:
             P = np.vstack((P, P_a)) if P is not None else P_a
         return P
 
+    def gen_labels(self, label_function):
+        # The setting of resolution should correspond to regions of each label
+        label_map = np.array(["_"]*len(self.state_set), dtype=object).reshape(self.map_shape)
+        for region, label in label_function.items():
+            xbl, xbu, ybl, ybu = region
+            xbl = xbl // self.map_res[0]
+            xbu = xbu // self.map_res[0]
+            ybl = ybl // self.map_res[1]
+            ybu = ybu // self.map_res[1]
+            for i in range(xbl, xbu):
+                for j in range(ybl, ybu):
+                    if label_map[i, j] == '_':
+                        label_map[i, j] = label
+                    else:
+                        label_map[i, j] = label_map[i, j] + "&"+ label
+        return label_map.flatten()
+
+    def get_state_index(self, abs_state):
+        state_index = self.state_set.tolist().index(abs_state)
+        return state_index
 
     def trans_func(self, position, action):
         def action_prob(action):
@@ -58,7 +84,6 @@ class Abstraction:
             elif action == 2:
                 prob = np.array([0.0, 0.0, 0.0, 0.2, 0.8])
             return prob
-
         # map = self.state_set.reshape([self.map_shape[1], self.map_shape[0], 2]).transpose((1, 0, 2))
         P_sn = np.zeros(len(self.state_set)).reshape(self.map_shape)
 
@@ -72,10 +97,19 @@ class Abstraction:
         return P_sn.flatten(order='F')
 
 
+
+
 if __name__ == '__main__':
-    pcpt_range = (18, 25)
-    pcpt_res = (2, 5)
+    pcpt_range = (20, 20)
+    pcpt_res = (5, 5)
     dt = 1
-    abs_model = Abstraction(pcpt_range, pcpt_res)
-    P_sn = abs_model.transition((3, 0), (-1, 2))
-    abs_model.linear()
+    initial_position = (2, 2)
+    label_func = {(15, 20, 15, 20): "t",
+                  (5, 15, 5, 10): "o",
+                  (10, 20, 0, 20): "r"}
+
+    abs_model = Abstraction(pcpt_range, pcpt_res, initial_position, label_func)
+    MDP = abs_model.MDP
+    print(abs_model.MDP.transitions)
+    print(abs_model.MDP.labelling)
+    print(abs_model.MDP.initial_state)

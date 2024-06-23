@@ -2,7 +2,7 @@ import networkx as nx
 
 
 class MDP:
-    def __init__(self, states, actions, transitions, labels, initial_state):
+    def __init__(self, states, actions, transitions, labels_map, initial_state):
         """
         states: Set of all states
         actions: Set of all actions
@@ -13,7 +13,7 @@ class MDP:
         self.states = states
         self.actions = actions
         self.transitions = transitions
-        self.labels = labels
+        self.labelling = labels_map
         self.initial_state = initial_state
         self.__self_check()
 
@@ -26,7 +26,7 @@ class MDP:
     def __self_check(self):
         state_num = len(self.states)
         action_num = len(self.actions)
-        if len(self.labels) != state_num:
+        if len(self.labelling) != state_num:
             print("The number of labels does not fit the state set!")
         if len(self.transitions) != state_num * action_num:
             print("The transition set is incomplete!")
