@@ -51,7 +51,6 @@ def risk_LP():
     xi = [] 
     for sn in range(S_num): # compute incoming occupation
         # from s to s' sum_a x(s, a) P(s,a,s)'
-        print(sn)
         xi += [gamma * grb.quicksum(y[s,a] * P[a][s][sn] for a in range(action_num) for s in range(S_num))]
 
     lhs = [x[i]-xi[i] for i in range(len(xi))]

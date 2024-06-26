@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 
 PI = np.pi
 
+
 class Car_Para:
 
     # parameters for vehicle
-    K_SIZE = 1.0
+    K_SIZE = 0.5
     RF = 4.5 * K_SIZE  # [m] distance from rear to vehicle front end of vehicle
     RB = 1.0 * K_SIZE  # [m] distance from rear to vehicle back end of vehicle
     W = 3.0 * K_SIZE  # [m] width of vehicle
@@ -25,27 +26,50 @@ class Car_Para:
 
 class Visualizer:
 
-    def __init__(self, ax, road_size, square_obs_list):
-        self.road_size = road_size
-        self.square_obs_list = square_obs_list
+    def __init__(self, ax):
         self.ax = ax
 
-    def plot_all(self, ax):
-        self.plot_boundary_lines()
-        self.plot_obstacle()
+    def plot_road(self, road_size):
 
-    def plot_boundary_lines(self):
-
-        line_y = [n for n in range(self.road_size[1]+1)]
-        line_x = - np.ones(len(line_y)) * self.road_size[0] / 2
+        line_y = [n for n in range(road_size[1]+1)]
+        line_x = - np.ones(len(line_y)) * road_size[0] / 2
         self.ax.plot(line_x, line_y, '-', color='black')
-        line_x = np.ones(len(line_y)) * self.road_size[0] / 2
+        line_x = np.ones(len(line_y)) * road_size[0] / 2
         self.ax.plot(line_x, line_y, '-', color='black')
         line_x = np.zeros(len(line_y))
         self.ax.plot(line_x, line_y, '-.', color='black')
 
-    def plot_obstacle(self):
-        for obs in self.square_obs_list:
+    def plot_grid(self, region_size, region_res, label_func):
+        grid_x = np.arange(0, region_size[0]+1, region_res[0])
+        grid_y = np.arange(0, region_size[1]+1, region_res[1])
+        for x in grid_x:
+            self.ax.plot([x, x], [0, region_size[1]], color='black')
+        for y in grid_y:
+            self.ax.plot([0, region_size[0]], [y, y], color='black')
+
+        for region, label in label_func.items():
+            xbl, xbu, ybl, ybu = region
+
+            if label == 't':
+                c = 'blue'
+            elif label == 'o':
+                c = 'red'
+
+            rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c)
+            self.ax.add_patch(rect)
+
+            # for i in range(xbl, xbu):
+            #     for j in range(ybl, ybu):
+            #         if label_map[i, j] == '_':
+            #             label_map[i, j] = label
+            #         else:
+            #             label_map[i, j] = label_map[i, j] + "&"+ label
+        # return label_map.flatten()
+
+
+
+    def plot_obstacle(self, square_obs_list):
+        for obs in square_obs_list:
             rect = plt.Rectangle((obs[0], obs[1]), obs[2], obs[3], color='red')
             self.ax.add_patch(rect)
 

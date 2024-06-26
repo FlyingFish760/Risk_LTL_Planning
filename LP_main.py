@@ -11,7 +11,7 @@ import sim.perception as pept
 import sim.simulator as sim
 from risk_LP.risk_LP import RiskLP
 import risk_field.risk_field as rf
-from risk_LP.abstraction import Abstraction
+from risk_LP.abstraction import Abstraction_2
 
 
 def main():
@@ -32,14 +32,14 @@ def main():
     ax_3 = fig.add_subplot(grid[1, 1])
     ax_3.axis('off')
 
-    vis = Visualizer(ax_1, road_size, square_obs_list)
+    vis = Visualizer(ax_1)
     LP_prob = RiskLP()
 
     pcpt_range = (18, 25)
     pcpt_res = (2, 5)
 
     X, Y =  rf.torus_meshgrid(pcpt_range, pcpt_res)
-    plt.pause(5)
+    # plt.pause(5)
 
     while True:
 
@@ -53,7 +53,7 @@ def main():
         print(cost_map)
         cost_map =  cost_map.flatten(order='F')
 
-        abs_model = Abstraction(pcpt_range, pcpt_res)
+        abs_model = Abstraction_2(pcpt_range, pcpt_res)
         P_matrix = abs_model.linear()
         init_state = int(pcpt_range[0] / (2 * pcpt_res[0]))
         occ_measure = LP_prob.solve(P_matrix, cost_map, init_state)
@@ -61,8 +61,8 @@ def main():
         Z = Z.reshape((int(pcpt_range[1]/pcpt_res[1]), int(pcpt_range[0]/pcpt_res[0])))
 
         plt.gca().set_aspect(1)
-        vis.plot_boundary_lines()
-        vis.plot_obstacle()
+        vis.plot_road(road_size)
+        vis.plot_obstacle(square_obs_list)
         vis.plot_perception((car_pos[0], car_pos[1]), pcpt_range)
         vis.plot_car(car_pos[0], car_pos[1], car_state[2], 0)
         ax_2.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)

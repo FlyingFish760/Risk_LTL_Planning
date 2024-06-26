@@ -10,10 +10,10 @@ class RiskLP:
 
     def solve(self, P, c_map, initial_state):
     
-        self.action_num = P.shape[1]  # number of actions
-        self.state_num = P.shape[0] # number of states not in T
+        self.action_num = P.shape[0]  # number of actions
+        self.state_num = P.shape[1] # number of states not in T
         S0 = initial_state # The initial state
-        gamma = 0.6 # discount factor
+        gamma = 0.9 # discount factor
         model = grb.Model("risk_lp")
         y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name = 'x')
     
@@ -24,15 +24,14 @@ class RiskLP:
         xi = []
         for sn in range(self.state_num): # compute incoming occupation
             # from s to s' sum_a x(s, a) P(s,a,s)'
-            xi += [gamma * grb.quicksum(y[s,a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
+            xi += [gamma * grb.quicksum(y[s,a] * P[a][s][sn] for a in range(self.action_num) for s in range(self.state_num))]
     
         lhs = [x[i]-xi[i] for i in range(len(xi))]
         rhs = [0] * self.state_num
         rhs[S0] = 1
     
-        obj = grb.quicksum(y[s, a] * c_map[s]
-                           for a in range(self.action_num)
-                           for s in range(self.state_num))
+        obj = grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num)
+                            for s in range(self.state_num))
     
         for i in range(self.state_num):
             model.addConstr(lhs[i] == rhs[i])
@@ -41,47 +40,6 @@ class RiskLP:
         model.optimize()
         sol = model.getAttr('x', y)
         return sol
-
-    def solve_2(self, P, c_map, initial_state, accept_states, trap_states):
-
-        self.action_num = P.shape[1]  # number of actions
-        self.state_num = P.shape[0]  # number of states not in T
-        S0 = initial_state  # The initial state
-        gamma = 0.95  # discount factor
-        model = grb.Model("risk_lp")
-        y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name='x') # occupation measure
-
-        x = []
-        for s in range(self.state_num):  # compute occupation
-            x += [grb.quicksum(y[s, a] for a in range(self.action_num))]
-
-        xi = []
-        for sn in range(self.state_num):  # compute incoming occupation
-            # from s to s' sum_a x(s, a) P(s,a,s)'
-            xi += [gamma * grb.quicksum(
-                y[s, a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
-
-        lhs = [x[i] - xi[i] for i in range(len(xi))]
-        rhs = [0] * self.state_num
-        rhs[S0] = 1
-
-        obj = grb.quicksum(y[s, a] * P[s][a][sn]
-                           for a in range(self.action_num)
-                           for s in range(self.state_num)
-                           for sn in accept_states)
-
-        # obj_1 = grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num))
-
-        for i in range(self.state_num):
-            model.addConstr(lhs[i] == rhs[i])
-
-        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 0.05)
-
-        model.setObjective(obj, grb.GRB.MAXIMIZE)
-        model.optimize()
-        sol = model.getAttr('x', y)
-        return sol
-
     
     def extract(self, occup_dict):
         strategy = np.zeros(self.state_num)
