@@ -70,13 +70,10 @@ class RiskLP:
                            for s in range(self.state_num)
                            for sn in accept_states)
 
-        # obj_1 = grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num))
-
         for i in range(self.state_num):
             model.addConstr(lhs[i] == rhs[i])
 
-        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 0.05)
-
+        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 1)
         model.setObjective(obj, grb.GRB.MAXIMIZE)
         model.optimize()
         sol = model.getAttr('x', y)

@@ -12,8 +12,8 @@ class Abstraction:
         self.action_set = self.gen_abs_action()
         trans_matrix = self.gen_transitions()
         label_map = self.gen_labels(label_function)
-        init_abs_state = [initial_position[0]//self.map_res[0], initial_position[1]//self.map_res[1]]
-        initial_state = self.get_state_index(init_abs_state)
+        self.init_abs_state = [initial_position[0]//self.map_res[0], initial_position[1]//self.map_res[1]]
+        initial_state = self.get_state_index(self.init_abs_state)
         state_index_set = np.arange(len(self.state_set))
         action_index_set = np.arange(len(self.action_set))
         self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state)

@@ -38,10 +38,10 @@ class LTL_Spec:
                   transitions=transitions_set,
                   initial_state = initial_state,
                   sink_states= sink_states)
-        # print(dfa.transitions)
-        # print(dfa.initial_state)
-        # print(dfa.states)
-        # print(dfa.alphabet)
+        print(dfa.transitions)
+        print(dfa.initial_state)
+        print(dfa.states)
+        print(dfa.alphabet)
         return dfa
 
 
@@ -64,8 +64,7 @@ class LTL_Spec:
 if __name__ == "__main__":
 
     # The syntax of LTLf is defined in the link: http://ltlf2dfa.diag.uniroma1.it/ltlf_syntax
-    safe_frag = LTL_Spec("G(r->!c)")
     safe_frag = LTL_Spec("G(!b)")
-    scltl_frag = LTL_Spec("F(a)")
+    # scltl_frag = LTL_Spec("F(a)")
 
 
