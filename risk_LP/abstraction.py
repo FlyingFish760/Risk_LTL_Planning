@@ -18,6 +18,12 @@ class Abstraction:
         action_index_set = np.arange(len(self.action_set))
         self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state)
 
+    def update_abs_state(self, position):
+        abs_state = [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
+        state_index = self.get_state_index(abs_state)
+        self.init_abs_state = abs_state
+        self.MDP.initial_state = state_index
+
     def gen_abs_state(self, map_range, map_res):
         xbl = 0
         xbu = int(map_range[0] / map_res[0])
@@ -105,34 +111,7 @@ class Abstraction:
                     P_sn[position[0] + m - 2, position[1] + n - 2] = prob_map[m, n]
         return P_sn.flatten(order='F')
 
-        # def local_trans_func(self, position, action):
-        #     def action_prob(action):
-        #         if action == -2:
-        #             prob = np.array([0.8, 0.2, 0.0, 0.0, 0.0])
-        #         elif action == -1:
-        #             prob = np.array([0.0, 0.9, 0.1, 0.0, 0.0])
-        #         elif action == 0:
-        #             prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-        #         elif action == 1:
-        #             prob = np.array([0.0, 0.0, 0.1, 0.9, 0.0])
-        #         elif action == 2:
-        #             prob = np.array([0.0, 0.0, 0.0, 0.2, 0.8])
-        #         return prob
-        #
-        #     # map = self.state_set.reshape([self.map_shape[1], self.map_shape[0], 2]).transpose((1, 0, 2))
-        #     P_sn = np.zeros(len(self.state_set)).reshape(self.map_shape)
-        #
-        #     prob_x = action_prob(action[0])
-        #     prob_y = action_prob(action[1])
-        #     prob_map = np.outer(prob_x, prob_y)
-        #     for m in range(len(prob_x)):
-        #         for n in range(len(prob_y)):
-        #             if (0 <= position[0] + m - 2 <= self.map_shape[0] - 1) and (
-        #                     0 <= position[1] + n - 2 <= self.map_shape[1] - 1):
-        #                 P_sn[position[0] + m - 2, position[1] + n - 2] = prob_map[m, n]
-        #     return P_sn.flatten(order='F')
 
-        # return P_sn.flatten(order='F')
 
 
 #!/usr/bin/env python

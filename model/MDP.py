@@ -15,21 +15,12 @@ class MDP:
         self.transitions = transitions
         self.labelling = labels_map
         self.initial_state = initial_state
-        self.__self_check()
 
     def get_trans_prob(self, state, action):
         return self.transitions.get((state, action))
 
-    def structure_plot(self):
-        G = nx.DiGraph() #Todo
-
-    def __self_check(self):
-        state_num = len(self.states)
-        action_num = len(self.actions)
-        if len(self.labelling) != state_num:
-            print("The number of labels does not fit the state set!")
-        if len(self.transitions) != state_num * action_num:
-            print("The transition set is incomplete!")
+    # def structure_plot(self):
+    #     G = nx.DiGraph() #Todo
 
 
 

@@ -18,7 +18,6 @@ from controller import MPC
 def main():
 
     # ---------- Environment Setting ---------------------
-
     params = {"dt": 0.1, "WB": 1.5}
     car_state = np.array([2, 2, np.pi/2])
     prod_state = (0, 1,  1)
@@ -46,25 +45,23 @@ def main():
     LP_prob = RiskLP()
     mpc_con = MPC(params, horizon_steps=5)
     car_pos = car_state[:2]
-    abs_model = Abstraction(region_size, region_res, car_pos, label_func)
-    target_abs_state = abs_model.get_abs_state(car_pos)
     abs_state = [-1, -1]
+    target_abs_state = None
+
+    # ----------- Abstraction -----------------------------
+    abs_model = Abstraction(region_size, region_res, car_pos, label_func)
+    MDP = abs_model.MDP
+    prod_auto = Product(MDP, scltl_frag.dfa, safe_frag.dfa)
+    P_matrix = prod_auto.prod_transitions
+    cost_map = prod_auto.gen_cost_map(cost_func)
     while True:
         ax_1.cla()
         ax_2.cla()
         ax_1.set_aspect(1)
         car_pos = car_state[:2]
 
-        # ----------- Abstraction -----------------------------
-        abs_model = Abstraction(region_size, region_res, car_pos, label_func)
-
+        abs_model.update_abs_state(car_pos)
         if abs_state != abs_model.init_abs_state:
-            abs_state = abs_model.get_abs_state(car_pos)
-            MDP = abs_model.MDP
-            prod_auto = Product(MDP, scltl_frag.dfa, safe_frag.dfa)
-            P_matrix = prod_auto.prod_transitions
-            cost_map = prod_auto.gen_cost_map(cost_func)
-
             abs_state_index, abs_state = abs_model.get_abs_state(car_pos)
             prod_state_index, prod_state  = prod_auto.update_prod_state(abs_state_index, prod_state)
             occ_measure = LP_prob.solve_2(P_matrix, cost_map, prod_state_index, prod_auto.accepting_states, prod_auto.trap_states)
@@ -80,7 +77,6 @@ def main():
         print("target_point", target_point)
         for i in range(2):
             car_state = sim.car_dyn(car_state, control_input, params['dt'])
-
 
         plt.gca().set_aspect(1)
         vis.plot_grid(region_size, region_res, label_func)

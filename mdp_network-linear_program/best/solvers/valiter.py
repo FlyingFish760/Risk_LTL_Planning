@@ -1,4 +1,4 @@
-'''Module for table value iteration'''
+ '''Module for table value iteration'''
 import time
 import copy
 import numpy as np
