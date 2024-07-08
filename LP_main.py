@@ -5,13 +5,12 @@
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
-
 from sim.visualizer import Visualizer
 import sim.perception as pept
 import sim.simulator as sim
 from risk_LP.risk_LP import RiskLP
 import risk_field.risk_field as rf
-from risk_LP.abstraction import Abstraction_2
+from abstraction.abstraction import Abstraction_2
 
 
 def main():

@@ -30,7 +30,7 @@ class MPC:
         states = ca.vertcat(x, y, theta)
         controls = ca.vertcat(v, delta)
 
-        # Bicycle model dynamics
+        # Bicycle abstraction dynamics
         xdot = v * ca.cos(theta)
         ydot = v * ca.sin(theta)
         thetadot = v / self.WB * ca.tan(delta)

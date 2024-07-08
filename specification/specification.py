@@ -1,48 +1,86 @@
 import networkx as nx
+import itertools
 import pygraphviz as pgv
 import matplotlib.pyplot as plt
 from networkx.drawing.nx_agraph import from_agraph
 from ltlf2dfa.parser.ltlf import LTLfParser
 from IPython.display import Image
+from specification.DFA import DFA
 import graphviz
-from model.DFA import *
+import re
 
 class LTL_Spec:
-    def __init__(self, spec):
+    def __init__(self, spec, AP_set):
         self.spec = spec
-        self.dfa = self.translate()
+        self.AP = AP_set
+        self.alphabet_set = list(itertools.product([True, False], repeat=len(self.AP)))
+        self.dfa = self.translate(spec)
 
-    def translate(self):
+    def translate(self, spec):
         parser = LTLfParser()
-        formula = parser(self.spec)  # returns an LTLfFormula
+        formula = parser(spec)  # returns an LTLfFormula
         dfa_dot = formula.to_dfa()
         dfa_graph = self.to_network(dfa_dot)
 
         edges_info = {edge: dfa_graph.edges[edge] for edge in dfa_graph.edges}
         state_set = [*range(1, len(dfa_graph.nodes))]
-        alphabet_set = []
-        transitions_set = {}
+        trans_condition = {}
+
         sink_states = []
         initial_state = 'init'
         for edge, _obs in edges_info.items():
             if _obs.get('label') is not None:
                 obs = _obs.get('label')
-                alphabet_set.append(obs)
-                transitions_set[(edge[0], obs)] = edge[1]
+                trans_condition[edge] = obs
             if (_obs.get('label') == "true") and (edge[0] == edge[1]):
                 sink_states.append(edge[0])
             if (edge[0] == 'init') and (_obs.get('label') is None):
                 initial_state = edge[1]
+
+        transitions_set = self.gen_transition(trans_condition)
         dfa = DFA(states=state_set,
-                  alphabet= alphabet_set,
+                  alphabet= self.alphabet_set,
                   transitions=transitions_set,
                   initial_state = initial_state,
-                  sink_states= sink_states)
-        print(dfa.transitions)
-        print(dfa.initial_state)
-        print(dfa.states)
-        print(dfa.alphabet)
+                  sink_states= sink_states,
+                  AP_set=self.AP)
+        # print(dfa.transitions)
+        # print(dfa.initial_state)
+        # print(dfa.states)
+        # print(dfa.alphabet)
         return dfa
+
+    def get_alphabet(self, letter):
+        # Create a tuple based on the presence of each letter in ap_set in the string 'letter'
+        return tuple(ap in letter for ap in self.AP)
+
+    def gen_transition(self, trans_condition):
+        def parse_expression(expression):
+            # Replace logical operators with Python equivalents
+            expression = expression.replace("&", " and ")
+            expression = expression.replace("|", " or ")
+            expression = expression.replace("~", " not ")
+            return expression
+        def evaluate_condition(condition, AP_set, letter):
+            expression = parse_expression(condition)
+            # Create a dictionary to map words to their boolean values
+            letter_dict = dict(zip(AP_set, letter))
+            # Replace words in the expression with their boolean values
+            for AP, value in letter_dict.items():
+                expression = re.sub(r'\b' + AP + r'\b', str(value), expression)
+            # Evaluate the final expression
+            print(expression)
+            return eval(expression)
+
+        transition_set = {}
+        for edge, condition in trans_condition.items():
+            for letter in self.alphabet_set:
+                if condition == 'true':
+                    transition_set[(edge[0], letter)] = edge[1]
+                else:
+                    if evaluate_condition(condition, self.AP, letter):
+                            transition_set[(edge[0], letter)] = edge[1]
+        return transition_set
 
 
     def to_network(self, dfa_dot, plot_flag=False, image_flag=False):
@@ -67,7 +105,10 @@ class LTL_Spec:
 if __name__ == "__main__":
 
     # The syntax of LTLf is defined in the link: http://ltlf2dfa.diag.uniroma1.it/ltlf_syntax
-    safe_frag = LTL_Spec("G(!o) & G(!g->!c)")
+    AP_set = ['o', 'c', 'g']
+    safe_frag = LTL_Spec("G(!o) & G(!g->!c)", AP_set)
+    print(safe_frag.get_alphabet('r&o'))
+    # print(alphabet)
     # safe_frag = LTL_Spec("G(!b)")
     # scltl_frag = LTL_Spec("F(a)")
 

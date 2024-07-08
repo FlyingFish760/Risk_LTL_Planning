@@ -54,6 +54,8 @@ class Visualizer:
                 c = 'blue'
             elif label == 'o':
                 c = 'red'
+            elif label == 'c':
+                c = 'yellow'
 
             rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c)
             self.ax.add_patch(rect)

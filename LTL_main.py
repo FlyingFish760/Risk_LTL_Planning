@@ -8,10 +8,9 @@ import numpy as np
 from sim.visualizer import Visualizer
 import sim.simulator as sim
 from risk_LP.risk_LP import RiskLP
-import risk_field.risk_field as rf
 from risk_LP.prod_auto import Product
 from specification.specification import LTL_Spec
-from risk_LP.abstraction import Abstraction
+from abstraction.abstraction import Abstraction
 from controller import MPC
 
 
@@ -28,8 +27,8 @@ def main():
     region_res = (5, 5)
 
     # ---------- Specification Define --------------------
-    safe_frag = LTL_Spec("G(!o)")
-    scltl_frag = LTL_Spec("F(t)")
+    safe_frag = LTL_Spec("G(!o)", AP_set=['o'])
+    scltl_frag = LTL_Spec("F(t)", AP_set=['t'])
 
     # ---------- Realtime States ---------------------
     fig = plt.figure()

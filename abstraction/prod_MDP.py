@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
-from risk_LP.abstraction import Abstraction
-from model.MDP import MDP
+from abstraction.abstraction import Abstraction
+from abstraction.abstraction import MDP
 
 
 class Prod_MDP:

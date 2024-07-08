@@ -1,6 +1,6 @@
 import numpy as np
 
-from risk_LP.abstraction import Abstraction
+from abstraction.abstraction import Abstraction
 from specification.specification import LTL_Spec
 
 class Product:
@@ -24,13 +24,16 @@ class Product:
                 next_x_prob = self.MDP.transitions[x, a, :]
                 for next_x in range(len(next_x_prob)):
                     next_x_label = self.MDP.labelling[next_x]
-                    if self.DFA_cs.transitions.get((str(s_cs), next_x_label)) is not None:
-                        next_s_cs = self.DFA_cs.transitions.get((str(s_cs), next_x_label))
+                    alphabet_cs = self.DFA_cs.get_alphabet(next_x_label)
+                    alphabet_s = self.DFA_safe.get_alphabet(next_x_label)
+
+                    if self.DFA_cs.transitions.get((str(s_cs), alphabet_cs)) is not None:
+                        next_s_cs = self.DFA_cs.transitions.get((str(s_cs), alphabet_cs))
                     else:
                         next_s_cs = s_cs
 
-                    if self.DFA_safe.transitions.get((str(s_s), next_x_label)) is not None:
-                        next_s_s = self.DFA_safe.transitions.get((str(s_s), next_x_label))
+                    if self.DFA_safe.transitions.get((str(s_s), alphabet_s)) is not None:
+                        next_s_s = self.DFA_safe.transitions.get((str(s_s), alphabet_s))
                     else:
                         next_s_s = s_s
 

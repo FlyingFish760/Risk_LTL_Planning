@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import gurobipy as grb
 import numpy as np
-from model.MDP import MDP
+from abstraction.MDP import MDP
 
 class Abstraction:
 
