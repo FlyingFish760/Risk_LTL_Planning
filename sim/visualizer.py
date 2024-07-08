@@ -50,14 +50,17 @@ class Visualizer:
         for region, label in label_func.items():
             xbl, xbu, ybl, ybu = region
 
-            if label == 't':
-                c = 'blue'
+            if label == 'c':
+                c = 'yellow'
+                a = 0.5
             elif label == 'o':
                 c = 'red'
-            elif label == 'c':
-                c = 'yellow'
+                a = 1
+            elif label == 't':
+                c = 'blue'
+                a = 1
 
-            rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c)
+            rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c, alpha=a)
             self.ax.add_patch(rect)
 
             # for i in range(xbl, xbu):

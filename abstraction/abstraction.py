@@ -72,7 +72,7 @@ class Abstraction:
                     if label_map[i, j] == '_':
                         label_map[i, j] = label
                     else:
-                        label_map[i, j] = label_map[i, j] + "&"+ label
+                        label_map[i, j] = label_map[i, j] + label
         return label_map.flatten()
 
 

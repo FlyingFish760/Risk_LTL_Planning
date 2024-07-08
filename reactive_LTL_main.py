@@ -23,9 +23,9 @@ def main():
     car_state = np.array([2, 2, np.pi/2])
     prod_state = (0, 1,  1)
     region_size = (20, 20)
-    label_func = {(15, 20, 15, 20): "t",
-                  (10, 20, 10, 20): "c"}
-    cost_func = {"co_safe": 0, "safe": 100}
+    label_func = {(10, 20, 10, 20): "c",
+                  (15, 20, 15, 20): "t"}
+    cost_func = {"co_safe": 0, "safe": 10}
     region_res = (5, 5)
 
     # ---------- Traffic Light --------------------
@@ -84,8 +84,8 @@ def main():
             occ_measure = LP_prob.solve_2(P_matrix, cost_map, prod_state_index, prod_auto.accepting_states, prod_auto.trap_states)
             optimal_policy, Z = LP_prob.extract(occ_measure)
             decision_index = optimal_policy[prod_state_index]
-            sys_decision, expected_env_action = mdp_prod.prod_action_set[int(decision_index)]
-            target_abs_state_sys = abs_state_sys + abs_model.action_set[sys_decision]
+            sys_decision = abs_model.action_set[decision_index]
+            target_abs_state_sys = abs_state_sys + sys_decision
 
         target_point = target_abs_state_sys * 5 + np.array([2.5, 2.5])
         control_input = mpc_con.solve(car_state, target_point)

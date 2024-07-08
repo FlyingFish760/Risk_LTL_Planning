@@ -1,24 +1,22 @@
 #!/usr/bin/env python
 import numpy as np
 from abstraction.abstraction import Abstraction
-from abstraction.abstraction import MDP
+from abstraction.MDP import MDP
 
 
 class Prod_MDP:
-    def __init__(self, map_sys, map_env):
-        self.map_sys = map_sys
-        self.map_env = map_env
+    def __init__(self, mdp_sys, mdp_env):
+        self.mdp_sys = mdp_sys
+        self.mdp_env = mdp_env
         self.prod_state_set = [(x_sys, x_env)
-                           for x_sys in self.map_sys.states
-                           for x_env in self.map_env.states]
-        self.prod_action_set = [(a_sys, a_env)
-                                for a_sys in self.map_sys.actions
-                                for a_env in self.map_env.actions]
+                           for x_sys in self.mdp_sys.states
+                           for x_env in self.mdp_env.states]
+        self.prod_action_set = self.mdp_sys.actions
         state_index_set = np.arange(len(self.prod_state_set))
         action_index_set = np.arange(len(self.prod_action_set))
         label_map = self.gen_labels()
         trans_matrix = self.gen_transitions()
-        initial_state = self.get_prod_state_index((self.map_sys.initial_state, self.map_env.initial_state))
+        initial_state = self.get_prod_state_index((self.mdp_sys.initial_state, self.mdp_env.initial_state))
         self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state)
 
     def gen_transitions(self):
@@ -26,14 +24,15 @@ class Prod_MDP:
         for prod_state in self.prod_state_set:
             x_sys, x_env = prod_state
             P_s = []
-            for (a_sys, a_env) in self.prod_action_set:
-                next_x_sys_prob = self.map_sys.transitions[x_sys, a_sys, :]
-                next_x_env_prob = self.map_env.transitions[a_env, x_env, :]
+            for a_sys in self.mdp_sys.actions:
                 P_s_a = np.zeros(len(self.prod_state_set))
-                for next_x_sys in range(len(next_x_sys_prob)):
-                    for next_x_env in range(len(next_x_env_prob)):
-                        next_state_index = self.get_prod_state_index((next_x_sys, next_x_env))
-                        P_s_a[next_state_index] = next_x_sys_prob[next_x_sys] * next_x_env_prob[next_x_env]
+                for a_env in self.mdp_env.actions:
+                    next_x_sys_prob = self.mdp_sys.transitions[x_sys, a_sys, :]
+                    next_x_env_prob = self.mdp_env.transitions[a_env, x_env, :]
+                    for next_x_sys in range(len(next_x_sys_prob)):
+                        for next_x_env in range(len(next_x_env_prob)):
+                            next_state_index = self.get_prod_state_index((next_x_sys, next_x_env))
+                            P_s_a[next_state_index] += next_x_sys_prob[next_x_sys] * next_x_env_prob[next_x_env]
                 P_s.append(P_s_a)
             P.append(P_s)
         return np.array(P)
@@ -42,7 +41,7 @@ class Prod_MDP:
         label_map = []
         for prod_state in self.prod_state_set:
             x_sys, x_env = prod_state
-            label_map.append(self.map_sys.labelling[x_sys] + '&' + self.map_env.labelling[x_env])
+            label_map.append(self.mdp_sys.labelling[x_sys] + self.mdp_env.labelling[x_env])
         return np.array(label_map)
 
     def get_prod_state_index(self, prod_state):
