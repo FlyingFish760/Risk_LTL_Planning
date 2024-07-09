@@ -43,7 +43,6 @@ class RiskLP:
         return sol
 
     def solve_2(self, P, c_map, initial_state, accept_states, trap_states):
-
         self.action_num = P.shape[1]  # number of actions
         self.state_num = P.shape[0]  # number of states not in T
         S0 = initial_state  # The initial state

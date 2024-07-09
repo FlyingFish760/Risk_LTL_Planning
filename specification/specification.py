@@ -69,7 +69,6 @@ class LTL_Spec:
             for AP, value in letter_dict.items():
                 expression = re.sub(r'\b' + AP + r'\b', str(value), expression)
             # Evaluate the final expression
-            print(expression)
             return eval(expression)
 
         transition_set = {}

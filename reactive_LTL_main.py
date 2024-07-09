@@ -19,7 +19,7 @@ from abstraction.prod_MDP import Prod_MDP
 def main():
 
     # ---------- Environment Setting ---------------------
-    params = {"dt": 0.1, "WB": 1.5}
+    params = {"dt": 0.05, "WB": 1.5}
     car_state = np.array([2, 2, np.pi/2])
     prod_state = (0, 1,  1)
     region_size = (20, 20)
@@ -33,12 +33,12 @@ def main():
     state_set = range(len(traffic_light))
     action_set = [0, 1]
     transitions = np.array([[[1, 0],[0, 1]],
-                           [[0, 1], [1, 0]]])
+                           [[0, 0], [1, 0]]])
     initial_state = 1
     mdp_env = MDP(state_set, action_set, transitions, traffic_light, initial_state)
 
     # ---------- Specification Define --------------------
-    safe_frag = LTL_Spec("G(c U g)", AP_set=['o', 'c', 'g'])
+    safe_frag = LTL_Spec("G(~c U g)", AP_set=['o', 'c', 'g'])
     scltl_frag = LTL_Spec("F(t)", AP_set=['t'])
 
     # ---------- Realtime States ---------------------
@@ -69,11 +69,18 @@ def main():
     P_matrix = prod_auto.prod_transitions
     cost_map = prod_auto.gen_cost_map(cost_func)
 
-    while True:
+    iter = 1
+    while iter < 400:
+        iter += 1
+        if iter == 150:
+            abs_state_env = 0 # change the traffic light
+            abs_state_sys = [-1, -1]
+
         ax_1.cla()
         ax_2.cla()
         ax_1.set_aspect(1)
         car_pos = car_state[:2]
+
 
         # ----------- Abstraction -----------------------------
         abs_model.update_abs_state(car_pos)
@@ -84,20 +91,20 @@ def main():
             occ_measure = LP_prob.solve_2(P_matrix, cost_map, prod_state_index, prod_auto.accepting_states, prod_auto.trap_states)
             optimal_policy, Z = LP_prob.extract(occ_measure)
             decision_index = optimal_policy[prod_state_index]
-            sys_decision = abs_model.action_set[decision_index]
+            sys_decision = abs_model.action_set[int(decision_index)]
             target_abs_state_sys = abs_state_sys + sys_decision
 
         target_point = target_abs_state_sys * 5 + np.array([2.5, 2.5])
         control_input = mpc_con.solve(car_state, target_point)
-        print("control_input:", control_input)
         print("decision:", sys_decision)
         print("target_point", target_point)
-        for i in range(2):
-            car_state = sim.car_dyn(car_state, control_input, params['dt'])
+        print("control_input:", control_input)
+
+        car_state = sim.car_dyn(car_state, control_input, params)
 
         # ----------- Visualization -----------------------------
         plt.gca().set_aspect(1)
-        vis.plot_grid(region_size, region_res, label_func)
+        vis.plot_grid(region_size, region_res, label_func, abs_state_env)
         vis.plot_car(car_pos[0], car_pos[1], car_state[2], 0)
         plt.pause(0.001)
 

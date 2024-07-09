@@ -39,7 +39,7 @@ class Visualizer:
         line_x = np.zeros(len(line_y))
         self.ax.plot(line_x, line_y, '-.', color='black')
 
-    def plot_grid(self, region_size, region_res, label_func):
+    def plot_grid(self, region_size, region_res, label_func, traffic_light):
         grid_x = np.arange(0, region_size[0]+1, region_res[0])
         grid_y = np.arange(0, region_size[1]+1, region_res[1])
         for x in grid_x:
@@ -49,9 +49,8 @@ class Visualizer:
 
         for region, label in label_func.items():
             xbl, xbu, ybl, ybu = region
-
             if label == 'c':
-                c = 'yellow'
+                c = 'green' if traffic_light == 0 else 'red'
                 a = 0.5
             elif label == 'o':
                 c = 'red'

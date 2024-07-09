@@ -65,14 +65,18 @@ class Product:
     def update_prod_state(self, cur_abs_index, last_product_state):
         _, last_cs_state, last_safe_state  = last_product_state
         label = self.MDP.labelling[cur_abs_index]
-        if self.DFA_cs.transitions.get((str(last_cs_state), label)) is not None:
-            next_cs_state = self.DFA_cs.transitions.get((str(last_cs_state), label))
+        alphabet_cs = self.DFA_cs.get_alphabet(label)
+        alphabet_s = self.DFA_safe.get_alphabet(label)
+
+        if self.DFA_cs.transitions.get((str(last_cs_state), alphabet_cs)) is not None:
+            next_cs_state = self.DFA_cs.transitions.get((str(last_cs_state), alphabet_cs))
         else:
             next_cs_state = last_cs_state
-        if self.DFA_safe.transitions.get((str(last_safe_state), label)) is not None:
-            next_safe_state = self.DFA_safe.transitions.get((str(last_safe_state), label))
+        if self.DFA_safe.transitions.get((str(last_safe_state), alphabet_s)) is not None:
+            next_safe_state = self.DFA_safe.transitions.get((str(last_safe_state), alphabet_s))
         else:
             next_safe_state = last_safe_state
+
         cur_product_state = (cur_abs_index, int(next_cs_state), int(next_safe_state))
         product_state_index = self.prod_state_set.index(cur_product_state)
         return int(product_state_index), cur_product_state

@@ -62,6 +62,7 @@ if __name__ == '__main__':
     abs_model = Abstraction(pcpt_range, pcpt_res, initial_position, label_func)
     MDP_sys = abs_model.MDP
 
+    #-----------------Traffic Light System---------------------
     traffic_light = ['g', 'y', 'r']
     state_set = range(len(traffic_light))
     action_set = [0, 1]
@@ -74,4 +75,3 @@ if __name__ == '__main__':
     initial_state = 1
     MDP_env = MDP(state_set, action_set, transitions, traffic_light, initial_state)
     prod_mdp = Prod_MDP(MDP_sys, MDP_env)
-    print(prod_mdp.MDP.transitions)
