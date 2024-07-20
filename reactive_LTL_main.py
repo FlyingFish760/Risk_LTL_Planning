@@ -8,12 +8,14 @@ import numpy as np
 from abstraction.MDP import MDP
 from sim.visualizer import Visualizer
 import sim.simulator as sim
-from risk_LP.risk_LP import RiskLP
+from risk_LP.ltl_risk_LP import Risk_LTL_LP
 from risk_LP.prod_auto import Product
 from specification.specification import LTL_Spec
 from abstraction.abstraction import Abstraction
 from controller import MPC
 from abstraction.prod_MDP import Prod_MDP
+
+# Todo: 1) manually designed cost map 3) dynamic vehicle
 
 
 def main():
@@ -26,6 +28,7 @@ def main():
     label_func = {(10, 20, 10, 20): "c",
                   (15, 20, 15, 20): "t"}
     cost_func = {"co_safe": 0, "safe": 10}
+
     region_res = (5, 5)
 
     # ---------- Traffic Light --------------------
@@ -52,7 +55,7 @@ def main():
     ax_3.axis('off')
 
     vis = Visualizer(ax_1)
-    LP_prob = RiskLP()
+    LP_prob = Risk_LTL_LP()
     mpc_con = MPC(params, horizon_steps=5)
     car_pos = car_state[:2]
     abs_model = Abstraction(region_size, region_res, car_pos, label_func)
@@ -69,6 +72,10 @@ def main():
     P_matrix = prod_auto.prod_transitions
     cost_map = prod_auto.gen_cost_map(cost_func)
 
+    # oppo_car_state = np.array([7.5, 2, np.pi/2])
+    # oppo_car_pos = oppo_car_state[:2]
+    # oppo_car_abs_state = abs_model.get_abs_state(oppo_car_pos)
+    occ_measure = None
     iter = 1
     while iter < 400:
         iter += 1
@@ -81,14 +88,13 @@ def main():
         ax_1.set_aspect(1)
         car_pos = car_state[:2]
 
-
         # ----------- Abstraction -----------------------------
         abs_model.update_abs_state(car_pos)
         if abs_state_sys != abs_model.init_abs_state:
             abs_state_sys_index, abs_state_sys = abs_model.get_abs_state(car_pos)
             state_sys_env_index = mdp_prod.get_prod_state_index((abs_state_sys_index, abs_state_env))
             prod_state_index, prod_state  = prod_auto.update_prod_state(state_sys_env_index, prod_state)
-            occ_measure = LP_prob.solve_2(P_matrix, cost_map, prod_state_index, prod_auto.accepting_states, prod_auto.trap_states)
+            occ_measure = LP_prob.solve(P_matrix, cost_map, prod_state_index, prod_auto.accepting_states, occ_measure)
             optimal_policy, Z = LP_prob.extract(occ_measure)
             decision_index = optimal_policy[prod_state_index]
             sys_decision = abs_model.action_set[int(decision_index)]

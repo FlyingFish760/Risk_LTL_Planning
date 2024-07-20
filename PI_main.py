@@ -35,6 +35,8 @@ def main():
     pcpt_range = (30, 20)
     pcpt_res = (1, 1)
 
+
+
     while True:
 
         ax_1.cla()

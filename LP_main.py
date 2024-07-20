@@ -38,10 +38,8 @@ def main():
     pcpt_res = (2, 5)
 
     X, Y =  rf.torus_meshgrid(pcpt_range, pcpt_res)
-    # plt.pause(5)
 
     while True:
-
         ax_1.cla()
         ax_2.cla()
         ax_1.set_aspect(1)

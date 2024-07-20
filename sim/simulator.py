@@ -59,7 +59,7 @@ def update_1(state, action, params):
     angle_vel = 0.5 * e
     input = (v, angle_vel)
     print("angle:", des_angle, state[2], e, angle_vel)
-    state = car_dyn(state, input, params["dt"])
+    state = car_dyn(state, input, params)
     return state
 
 

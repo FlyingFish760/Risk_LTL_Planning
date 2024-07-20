@@ -112,11 +112,12 @@ class Abstraction:
         return P_sn.flatten(order='F')
 
 
+    # def abs_oppo_car(self, car_pos):
+    #     abs_state = [int(car_pos[0]//self.map_res[0]), int(car_pos[1]//self.map_res[1])]
+    #     prob_abs_label = self.MDP.labelling[self.get_state_index(abs_state)]
+    #     return abs_state
 
 
-#!/usr/bin/env python
-import gurobipy as grb
-import numpy as np
 
 
 class Abstraction_2:
@@ -159,7 +160,6 @@ class Abstraction_2:
         return P
 
 
-
     def transition(self, position, action):
         def action_prob(action):
             if action == -2:
@@ -186,6 +186,9 @@ class Abstraction_2:
                     P_sn[position[0] + m - 2, position[1] + n - 2] = prob_map[m, n]
 
         return P_sn.flatten(order='F')
+
+
+
 
 
 if __name__ == '__main__':

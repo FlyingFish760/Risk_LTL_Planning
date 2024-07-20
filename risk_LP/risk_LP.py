@@ -42,41 +42,6 @@ class RiskLP:
         sol = model.getAttr('x', y)
         return sol
 
-    def solve_2(self, P, c_map, initial_state, accept_states, trap_states):
-        self.action_num = P.shape[1]  # number of actions
-        self.state_num = P.shape[0]  # number of states not in T
-        S0 = initial_state  # The initial state
-        gamma = 0.95  # discount factor
-        model = grb.Model("risk_lp")
-        y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name='x') # occupation measure
-
-        x = []
-        for s in range(self.state_num):  # compute occupation
-            x += [grb.quicksum(y[s, a] for a in range(self.action_num))]
-
-        xi = []
-        for sn in range(self.state_num):  # compute incoming occupation
-            # from s to s' sum_a x(s, a) P(s,a,s)'
-            xi += [gamma * grb.quicksum(
-                y[s, a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
-
-        lhs = [x[i] - xi[i] for i in range(len(xi))]
-        rhs = [0] * self.state_num
-        rhs[S0] = 1
-
-        obj = grb.quicksum(y[s, a] * P[s][a][sn]
-                           for a in range(self.action_num)
-                           for s in range(self.state_num)
-                           for sn in accept_states)
-
-        for i in range(self.state_num):
-            model.addConstr(lhs[i] == rhs[i])
-
-        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 1)
-        model.setObjective(obj, grb.GRB.MAXIMIZE)
-        model.optimize()
-        sol = model.getAttr('x', y)
-        return sol
 
     
     def extract(self, occup_dict):

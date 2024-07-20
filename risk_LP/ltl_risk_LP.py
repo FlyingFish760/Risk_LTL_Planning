@@ -2,44 +2,59 @@
 import gurobipy as grb
 import numpy as np
 
-class RiskLP:
+class Risk_LTL_LP:
 
     def __init__(self):
         self.state_num = None
         self.action_num = None
 
-    def solve(self, P, c_map, initial_state):
-    
-        self.action_num = P.shape[0]  # number of actions
-        self.state_num = P.shape[1] # number of states not in T
-        S0 = initial_state # The initial state
-        gamma = 0.9 # discount factor
+    def solve(self, P, c_map, initial_state, accept_states, initial_guess=None):
+        self.action_num = P.shape[1]  # number of actions
+        self.state_num = P.shape[0]  # number of states not in T
+        S0 = initial_state  # The initial state
+        gamma = 0.8  # discount factor
         model = grb.Model("risk_lp")
-        y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name = 'x')
-    
+        y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name='x') # occupation measure
+
+        # Set initial values for warm start if provided
+        if initial_guess is not None:
+            for s in range(self.state_num):
+                for a in range(self.action_num):
+                    y[s, a].start = initial_guess[s, a]
+
         x = []
-        for s in range(self.state_num): # compute occupation
-            x += [grb.quicksum(y[s,a] for a in range(self.action_num))]
-    
+        for s in range(self.state_num):  # compute occupation
+            x += [grb.quicksum(y[s, a] for a in range(self.action_num))]
+
         xi = []
-        for sn in range(self.state_num): # compute incoming occupation
+        for sn in range(self.state_num):  # compute incoming occupation
             # from s to s' sum_a x(s, a) P(s,a,s)'
-            xi += [gamma * grb.quicksum(y[s,a] * P[a][s][sn] for a in range(self.action_num) for s in range(self.state_num))]
-    
-        lhs = [x[i]-xi[i] for i in range(len(xi))]
+            xi += [gamma * grb.quicksum(
+                y[s, a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
+
+        lhs = [x[i] - xi[i] for i in range(len(xi))]
         rhs = [0] * self.state_num
         rhs[S0] = 1
-    
-        obj = grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num)
-                            for s in range(self.state_num))
-    
+
+        obj = grb.quicksum(y[s, a] * P[s][a][sn]
+                           for a in range(self.action_num)
+                           for s in range(self.state_num)
+                           for sn in accept_states)
+
         for i in range(self.state_num):
             model.addConstr(lhs[i] == rhs[i])
-    
+
+        model.setParam('Threads', 4)
+        # model.setParam('Presolve', 2)
+        # model.setParam('BarHomogeneous', 1)
+        # model.setParam('Heuristics', 0.1)  # Default is 0.05
+
+        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 1)
         model.setObjective(obj, grb.GRB.MAXIMIZE)
         model.optimize()
         sol = model.getAttr('x', y)
         return sol
+
     
     def extract(self, occup_dict):
         strategy = np.zeros(self.state_num)
