@@ -96,13 +96,10 @@ class LTL_Spec:
             Image(filename=f'{output_filename}.png')
         return dfa_graph
 
-    # def condition(self, word_1, word_2):
-    #     return f"({proposition_1} & {proposition_2})"
 
 
 
 if __name__ == "__main__":
-
     # The syntax of LTLf is defined in the link: http://ltlf2dfa.diag.uniroma1.it/ltlf_syntax
     AP_set = ['o', 'c', 'g']
     safe_frag = LTL_Spec("G(!o) & G(!g->!c)", AP_set)

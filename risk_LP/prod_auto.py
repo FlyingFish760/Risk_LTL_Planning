@@ -55,11 +55,12 @@ class Product:
 
     def gen_cost_map(self, cost_func):
         cost_map = np.zeros(len(self.prod_state_set))
-        for n in range(len(self.prod_state_set)):
-            if n in self.accepting_states:
-                cost_map[n] += cost_func["co_safe"]
-            if n in self.trap_states:
-                cost_map[n] += cost_func["safe"]
+        for n in self.trap_states:
+            x, s_cs, s_s = self.prod_state_set[n]
+            label = self.MDP.labelling[x]
+            for ap, cost in cost_func.items():
+                if ap in label:
+                    cost_map[n] += cost
         return cost_map
     
     def update_prod_state(self, cur_abs_index, last_product_state):

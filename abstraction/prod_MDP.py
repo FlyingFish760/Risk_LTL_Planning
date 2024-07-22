@@ -49,8 +49,6 @@ class Prod_MDP:
 
 
 
-
-
 if __name__ == '__main__':
     pcpt_range = (20, 20)
     pcpt_res = (5, 5)

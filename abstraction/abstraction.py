@@ -37,8 +37,10 @@ class Abstraction:
 
 
     def gen_abs_action(self):
-        vx_set = np.array([-2, -1, 0, 1, 2])
-        vy_set = np.array([-2, -1, 0, 1, 2])
+        # vx_set = np.array([-2, -1, 0, 1, 2])
+        # vy_set = np.array([-2, -1, 0, 1, 2])
+        vx_set = np.array([-1, 0, 1])
+        vy_set = np.array([-1, 0, 1])
         A, B = np.meshgrid(vx_set, vy_set)
         return np.array([A.flatten(), B.flatten()]).T
 
@@ -57,48 +59,56 @@ class Abstraction:
         return P
 
 
-
     def gen_labels(self, label_function):
         # The setting of resolution should correspond to regions of each label
-        label_map = np.array(["_"]*len(self.state_set), dtype=object).reshape(self.map_shape)
-        for region, label in label_function.items():
-            xbl, xbu, ybl, ybu = region
-            xbl = xbl // self.map_res[0]
-            xbu = xbu // self.map_res[0]
-            ybl = ybl // self.map_res[1]
-            ybu = ybu // self.map_res[1]
-            for i in range(xbl, xbu):
-                for j in range(ybl, ybu):
-                    if label_map[i, j] == '_':
-                        label_map[i, j] = label
-                    else:
-                        label_map[i, j] = label_map[i, j] + label
-        return label_map.flatten()
+        label_map = np.array(["_"]*len(self.state_set), dtype=object)
+        for n in range(len(self.state_set)):
+            for region, label in label_function.items():
+                xbl, xbu, ybl, ybu = region
+                xbl = xbl // self.map_res[0]
+                xbu = xbu // self.map_res[0]
+                ybl = ybl // self.map_res[1]
+                ybu = ybu // self.map_res[1]
+                if xbl <= self.state_set[n, 0] < xbu and ybl <= self.state_set[n, 1] < ybu:
+                    label_map[n] = label if label_map[n] == '_' else label_map[n] + label
+        return label_map
 
 
     def get_state_index(self, abs_state):
         state_index = self.state_set.tolist().index(abs_state)
         return state_index
 
-    def get_abs_state(self, position):
+    def get_abs_ind_state(self, position):
         abs_state = [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
         state_index = self.get_state_index(abs_state)
         return state_index, abs_state
 
 
+    def get_abs_state(self, position):
+        return [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
+
+
     def trans_func(self, position, action):
         def action_prob(action):
-            if action == -2:
-                prob = np.array([0.5, 0.4, 0.1, 0.0, 0.0])
-            elif action == -1:
-                prob = np.array([0.0, 0.8, 0.2, 0.0, 0.0])
+            if action == -1:
+                prob = np.array([0.0, 0.2, 0.8, 0.0, 0.0])
             elif action == 0:
                 prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
             elif action == 1:
-                prob = np.array([0.0, 0.0, 0.2, 0.8, 0.0])
-            elif action == 2:
-                prob = np.array([0.0, 0.0, 0.1, 0.4, 0.5])
+                prob = np.array([0.0, 0.0, 0.8, 0.2, 0.0])
             return prob
+
+            # if action == -2:
+            #     prob = np.array([0.5, 0.4, 0.1, 0.0, 0.0])
+            # elif action == -1:
+            #     prob = np.array([0.0, 0.8, 0.2, 0.0, 0.0])
+            # elif action == 0:
+            #     prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
+            # elif action == 1:
+            #     prob = np.array([0.0, 0.0, 0.2, 0.8, 0.0])
+            # elif action == 2:
+            #     prob = np.array([0.0, 0.0, 0.1, 0.4, 0.5])
+
         # map = self.state_set.reshape([self.map_shape[1], self.map_shape[0], 2]).transpose((1, 0, 2))
         P_sn = np.zeros(len(self.state_set)).reshape(self.map_shape)
 
@@ -112,10 +122,6 @@ class Abstraction:
         return P_sn.flatten(order='F')
 
 
-    # def abs_oppo_car(self, car_pos):
-    #     abs_state = [int(car_pos[0]//self.map_res[0]), int(car_pos[1]//self.map_res[1])]
-    #     prob_abs_label = self.MDP.labelling[self.get_state_index(abs_state)]
-    #     return abs_state
 
 
 

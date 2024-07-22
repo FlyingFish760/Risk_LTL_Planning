@@ -49,11 +49,18 @@ class Visualizer:
 
         for region, label in label_func.items():
             xbl, xbu, ybl, ybu = region
+            xbl = max(0, xbl)
+            xbu = min(region_size[0], xbu)
+            ybl = max(0, ybl)
+            ybu = min(region_size[1], ybu)
             if label == 'c':
                 c = 'green' if traffic_light == 0 else 'red'
                 a = 0.5
-            elif label == 'o':
-                c = 'red'
+            elif label == 'v1':
+                c = 'yellow'
+                a = 0.2
+            elif label == 'v0':
+                c = 'yellow'
                 a = 1
             elif label == 't':
                 c = 'blue'
@@ -61,15 +68,6 @@ class Visualizer:
 
             rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c, alpha=a)
             self.ax.add_patch(rect)
-
-            # for i in range(xbl, xbu):
-            #     for j in range(ybl, ybu):
-            #         if label_map[i, j] == '_':
-            #             label_map[i, j] = label
-            #         else:
-            #             label_map[i, j] = label_map[i, j] + "&"+ label
-        # return label_map.flatten()
-
 
 
     def plot_obstacle(self, square_obs_list):

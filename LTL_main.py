@@ -74,8 +74,9 @@ def main():
         print("control_input:", control_input)
         print("decision:", decision)
         print("target_point", target_point)
-        for i in range(2):
-            car_state = sim.car_dyn(car_state, control_input, params)
+
+
+        car_state = sim.car_dyn(car_state, control_input, params)
 
         plt.gca().set_aspect(1)
         vis.plot_grid(region_size, region_res, label_func)

@@ -42,10 +42,10 @@ def f_dyn(q, u, params):
 def car_dyn(state, input, param):
     p_x, p_y, yaw = state
     velocity, angle_vec = input
-    state = [p_x + np.cos(yaw) * velocity * param['dt'],
+    new_state = [p_x + np.cos(yaw) * velocity * param['dt'],
              p_y + np.sin(yaw) * velocity * param['dt'],
              yaw + velocity * angle_vec * param['dt'] / param['WB']]
-    return state
+    return new_state
 
 
 def update_1(state, action, params):
