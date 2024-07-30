@@ -3,14 +3,14 @@ import numpy as np
 Inf = 9999
 
 
-def gen_pcpt_dic(road_size, square_obs_list):
+def gen_pcpt_dic(road_size, square_obs_list, cost):
     pcpt_dic = []
     pcpt_dic.append(([[-Inf, -road_size[0] / 2], [0, Inf]], -5))
     pcpt_dic.append(([[road_size[0] / 2, Inf], [0, Inf]], -5))
 
     for square_obs in square_obs_list:
         pcpt_dic.append(([[square_obs[0], square_obs[0] + square_obs[2]],
-                          [square_obs[1], square_obs[1] + square_obs[3]]], -5))
+                          [square_obs[1], square_obs[1] + square_obs[3]]], cost))
 
 
     # pcpt_dic.append(([[-1, 1], [0, road_size[1]]], 0.1))
@@ -24,7 +24,7 @@ def gen_cost_map(perception_dic, car_pos, perception_range, res):
     n = int(np.floor(N / 2))
     m = int(perception_range[1] / res[1])
     cost_map = np.zeros((N, m))
-    cost_map[:, -1] = 10
+    # cost_map[n, -1] = 1
     for (area, cost) in perception_dic:
         # cost_map[int((area[0][0]+dla)/res): int((area[0][1]+dla)/res), int((area[1][0]+dla)/res): int((area[1][1]+dla)/res)] += cost
         relative_area = [[area[0][0] - car_pos[0], area[0][1] - car_pos[0]], [area[1][0] - car_pos[1], area[1][1] - car_pos[1]]]

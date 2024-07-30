@@ -12,7 +12,7 @@ class Risk_LTL_LP:
         self.action_num = P.shape[1]  # number of actions
         self.state_num = P.shape[0]  # number of states not in T
         S0 = initial_state  # The initial state
-        gamma = 0.95  # discount factor
+        gamma = 0.99  # discount factor
         model = grb.Model("risk_lp")
         y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name='x') # occupation measure
         z = model.addVars(1, vtype=grb.GRB.CONTINUOUS, name='z')
@@ -31,7 +31,7 @@ class Risk_LTL_LP:
         for sn in range(self.state_num):  # compute incoming occupation
             # from s to s' sum_a x(s, a) P(s,a,s)'
             xi += [gamma * grb.quicksum(
-                y[s, a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
+                   y[s, a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
 
         lhs = [x[i] - xi[i] for i in range(len(xi))]
         rhs = [0] * self.state_num
@@ -44,12 +44,12 @@ class Risk_LTL_LP:
                            for s in range(self.state_num)
                            for sn in accept_states) - z[0] ** 2
 
-        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 2 + z[0])
+        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 1 + z[0])
         model.setObjective(obj, grb.GRB.MAXIMIZE)
         # model.setParam('Threads', 4)
         # model.setParam('Presolve', 2)
         # model.setParam('BarHomogeneous', 1)
-        # model.setParam('Heuristics', 0.01)  # Default is 0.05
+        # model.setParam('Heuristics', 0.1)  # Default is 0.05
         model.optimize()
         sol = model.getAttr('x', y)
         return sol
@@ -62,10 +62,11 @@ class Risk_LTL_LP:
             state = occ[0][0]
             action = occ[0][1]
             prob = occ[1]
+
             if prob > risk_field[state]:
                 risk_field[state] = prob
                 strategy[state] = int(action)
-        return strategy, risk_field
+        return strategy, risk_field/max(risk_field)
 
 
 if __name__ == '__main__':

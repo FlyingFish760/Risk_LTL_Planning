@@ -63,7 +63,7 @@ def main():
         if abs_state != abs_model.init_abs_state:
             abs_state_index, abs_state = abs_model.get_abs_state(car_pos)
             prod_state_index, prod_state  = prod_auto.update_prod_state(abs_state_index, prod_state)
-            occ_measure = LP_prob.solve(P_matrix, cost_map, prod_state_index, prod_auto.accepting_states, prod_auto.trap_states)
+            occ_measure = LP_prob.solve(P_matrix, cost_map, prod_state_index, prod_auto.accepting_states)
             optimal_policy, Z = LP_prob.extract(occ_measure)
             decision_index = optimal_policy[prod_state_index]
             decision = abs_model.action_set[int(decision_index)]
@@ -71,13 +71,11 @@ def main():
 
         target_point = target_abs_state * 5 + np.array([2.5, 2.5])
         control_input = mpc_con.solve(car_state, target_point)
-        print("control_input:", control_input)
-        print("decision:", decision)
-        print("target_point", target_point)
-
+        # print("control_input:", control_input)
+        # print("decision:", decision)
+        # print("target_point", target_point)
 
         car_state = sim.car_dyn(car_state, control_input, params)
-
         plt.gca().set_aspect(1)
         vis.plot_grid(region_size, region_res, label_func)
         vis.plot_car(car_pos[0], car_pos[1], car_state[2], 0)

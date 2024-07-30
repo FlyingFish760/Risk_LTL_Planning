@@ -8,12 +8,11 @@ class RiskLP:
         self.state_num = None
         self.action_num = None
 
-    def solve(self, P, c_map, initial_state):
+    def solve(self, P, c_map, initial_state, gamma):
     
         self.action_num = P.shape[1]  # number of actions
         self.state_num = P.shape[0] # number of states not in T
         S0 = initial_state # The initial state
-        gamma = 0.6 # discount factor
         model = grb.Model("risk_lp")
         y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name = 'x')
     
@@ -42,8 +41,6 @@ class RiskLP:
         sol = model.getAttr('x', y)
         return sol
 
-
-    
     def extract(self, occup_dict):
         strategy = np.zeros(self.state_num)
         risk_field = np.zeros(self.state_num)

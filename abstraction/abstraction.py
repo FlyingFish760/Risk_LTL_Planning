@@ -2,6 +2,7 @@
 import gurobipy as grb
 import numpy as np
 from abstraction.MDP import MDP
+from scipy.stats import norm
 
 class Abstraction:
 
@@ -134,6 +135,7 @@ class Abstraction_2:
         self.state_set = self.abs_state(map_range, map_res)
         self.action_set = self.abs_action()
 
+
     def abs_state(self, map_range, map_res):
         xbl = 0
         xbu = map_range[0]
@@ -146,12 +148,18 @@ class Abstraction_2:
         return np.array([X.flatten(), Y.flatten()]).T
 
     def abs_action(self):
-        vx_set = np.array([-2, -1, 0, 1, 2])
-        vy_set = np.array([-2, -1, 0, 1, 2])
+        vx_set = np.array([-1, 0, 1])
+        vy_set = np.array([-1, 0, 1])
+        # vx_set = np.array([-2, -1, 0, 1, 2])
+        # vy_set = np.array([-2, -1, 0, 1, 2])
         A, B = np.meshgrid(vx_set, vy_set)
         return np.array([A.flatten(), B.flatten()]).T
 
-    def linear(self):
+    def get_state_index(self, abs_state):
+        state_index = self.state_set.tolist().index(abs_state)
+        return state_index
+
+    def linear(self): #Todo：check
         # based on single integrator
         P = None
         for i in range(len(self.state_set)):
@@ -166,30 +174,39 @@ class Abstraction_2:
         return P
 
 
+
     def transition(self, position, action):
-        def action_prob(action):
-            if action == -2:
-                prob = np.array([0.8, 0.2, 0.0, 0.0, 0.0])
-            elif action == -1:
-                prob = np.array([0.0, 0.9, 0.1, 0.0, 0.0])
-            elif action == 0:
-                prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-            elif action == 1:
-                prob = np.array([0.0, 0.0, 0.1, 0.9, 0.0])
-            elif action == 2:
-                prob = np.array([0.0, 0.0, 0.0, 0.2, 0.8])
-            return prob
+        def action_prob(action, std_dev, size):
+            mean = int(action)  # Mean of the distribution
+            n = int(size / 2)
+            x = np.linspace(-n, n, size)
+            gaussian_array = norm.pdf(x, 0, (abs(action) + 1) * std_dev)
+            gaussian_array /= gaussian_array.sum()
+            return gaussian_array
 
-        # map = self.state_set.reshape([self.map_shape[1], self.map_shape[0], 2]).transpose((1, 0, 2))
+        # def action_prob(action):
+        #     if action == -2:
+        #         prob = np.array([0.8, 0.2, 0.0, 0.0, 0.0])
+        #     elif action == -1:
+        #         prob = np.array([0.0, 0.9, 0.1, 0.0, 0.0])
+        #     elif action == 0:
+        #         prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
+        #     elif action == 1:
+        #         prob = np.array([0.0, 0.0, 0.1, 0.9, 0.0])
+        #     elif action == 2:
+        #         prob = np.array([0.0, 0.0, 0.0, 0.2, 0.8])
+        #     return prob
+
         P_sn = np.zeros(len(self.state_set)).reshape(self.map_shape)
-
-        prob_x = action_prob(action[0])
-        prob_y = action_prob(action[1])
+        prob_x = action_prob(action[0], 0.5, 7)
+        prob_y = action_prob(action[1],  0.5, 7)
         prob_map = np.outer(prob_x, prob_y)
+        k = int(len(prob_x) / 2)
+
         for m in range(len(prob_x)):
             for n in range(len(prob_y)):
-                if (0 <= position[0] + m - 2 <= self.map_shape[0] -1) and (0 <= position[1] + n - 2 <= self.map_shape[1]-1):
-                    P_sn[position[0] + m - 2, position[1] + n - 2] = prob_map[m, n]
+                if (0 <= position[0] + m - k <= self.map_shape[0] -1) and (0 <= position[1] + n - k <= self.map_shape[1]-1):
+                    P_sn[position[0] + m - k, position[1] + n - k] = prob_map[m, n]
 
         return P_sn.flatten(order='F')
 

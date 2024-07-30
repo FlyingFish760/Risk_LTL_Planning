@@ -55,12 +55,15 @@ class Visualizer:
             ybu = min(region_size[1], ybu)
             if label == 'c':
                 c = 'green' if traffic_light == 0 else 'red'
-                a = 0.5
+                a = 0.1
             elif label == 'v1':
                 c = 'yellow'
                 a = 0.2
             elif label == 'v0':
                 c = 'yellow'
+                a = 1
+            elif label == 'o':
+                c = 'grey'
                 a = 1
             elif label == 't':
                 c = 'blue'
