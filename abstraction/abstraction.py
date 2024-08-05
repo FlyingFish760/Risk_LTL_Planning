@@ -149,9 +149,9 @@ class Abstraction_2:
 
     def abs_action(self):
         vx_set = np.array([-1, 0, 1])
-        vy_set = np.array([-1, 0, 1])
+        # vy_set = np.array([-1, 0, 1])
         # vx_set = np.array([-2, -1, 0, 1, 2])
-        # vy_set = np.array([-2, -1, 0, 1, 2])
+        vy_set = np.array([-2, -1, 0, 1, 2])
         A, B = np.meshgrid(vx_set, vy_set)
         return np.array([A.flatten(), B.flatten()]).T
 
@@ -159,7 +159,7 @@ class Abstraction_2:
         state_index = self.state_set.tolist().index(abs_state)
         return state_index
 
-    def linear(self): #Todo：check
+    def linear(self):
         # based on single integrator
         P = None
         for i in range(len(self.state_set)):
@@ -174,32 +174,18 @@ class Abstraction_2:
         return P
 
 
-
     def transition(self, position, action):
         def action_prob(action, std_dev, size):
-            mean = int(action)  # Mean of the distribution
             n = int(size / 2)
             x = np.linspace(-n, n, size)
-            gaussian_array = norm.pdf(x, 0, (abs(action) + 1) * std_dev)
+            # gaussian_array = norm.pdf(x, 0, (abs(action) + 1) * std_dev)
+            gaussian_array = norm.pdf(x, action,  std_dev)
             gaussian_array /= gaussian_array.sum()
             return gaussian_array
 
-        # def action_prob(action):
-        #     if action == -2:
-        #         prob = np.array([0.8, 0.2, 0.0, 0.0, 0.0])
-        #     elif action == -1:
-        #         prob = np.array([0.0, 0.9, 0.1, 0.0, 0.0])
-        #     elif action == 0:
-        #         prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-        #     elif action == 1:
-        #         prob = np.array([0.0, 0.0, 0.1, 0.9, 0.0])
-        #     elif action == 2:
-        #         prob = np.array([0.0, 0.0, 0.0, 0.2, 0.8])
-        #     return prob
-
         P_sn = np.zeros(len(self.state_set)).reshape(self.map_shape)
-        prob_x = action_prob(action[0], 0.5, 7)
-        prob_y = action_prob(action[1],  0.5, 7)
+        prob_x = action_prob(action[0], 1.0, 5)
+        prob_y = action_prob(action[1],  1.0, 5)
         prob_map = np.outer(prob_x, prob_y)
         k = int(len(prob_x) / 2)
 
