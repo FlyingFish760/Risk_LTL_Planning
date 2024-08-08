@@ -28,9 +28,11 @@ def main():
     # ---------- Traffic Light --------------------
     traffic_light = ['g', 'r']
     state_set = range(len(traffic_light))
-    action_set = [0, 1]
-    transitions = np.array([[[1, 0],[0, 1]],
-                           [[0, 0], [1, 0]]])
+    # action_set = [0, 1]
+    # transitions = np.array([[[1, 0],[0, 1]],
+    #                        [[0, 0.0], [1, 0]]])
+    action_set = [0]
+    transitions = np.array([[[0.8, 0.2],[0.2, 0.8]]])
     initial_state = 1
     mdp_env = MDP(state_set, action_set, transitions, traffic_light, initial_state)
 

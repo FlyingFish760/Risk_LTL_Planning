@@ -16,7 +16,7 @@ class Risk_LTL_LP:
         model = grb.Model("risk_lp")
         y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name='x') # occupation measure
         z = model.addVars(1, vtype=grb.GRB.CONTINUOUS, name='z')
-
+        pi = model.addVars(self.state_num, vtype=grb.GRB.CONTINUOUS, name='strategy')
         # Set initial values for warm start if provided
         if initial_guess is not None:
             for s in range(self.state_num):
@@ -42,16 +42,25 @@ class Risk_LTL_LP:
         obj = grb.quicksum(y[s, a] * P[s][a][sn]
                            for a in range(self.action_num)
                            for s in range(self.state_num)
-                           for sn in accept_states)  - 10000 * z[0]**2
+                           for sn in accept_states)  - z[0]**2
 
-        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for a in range(self.action_num) for s in range(self.state_num)) <= 0.1 + z[0]) #
+        model.addConstr(grb.quicksum(pi[s] * c_map[s] for s in range(self.state_num)) <= 0.1 + z[0])
+        for s in range(self.state_num):
+            # Create a max expression for the action values
+            max_expr = grb.max_([y[s, a] for a in range(self.action_num)])
+            # Add the constraint for each state s
+            model.addConstr(pi[s] == max_expr)
         model.setObjective(obj, grb.GRB.MAXIMIZE)
         # model.setParam('Threads', 4)
         # model.setParam('Presolve', 2)
         # model.setParam('BarHomogeneous', 1)
-        model.setParam('Heuristics', 0.02)  # Default is 0.05
+        # model.setParam('Heuristics', 0.02)  # Default is 0.05
+        # model.setParam('Seed', 42)
+        model.setParam('MIPGap', 1e-4)
         model.optimize()
         sol = model.getAttr('x', y)
+        relax = model.getAttr('x', z)
+        print("relax:", relax)
         return sol
 
     
