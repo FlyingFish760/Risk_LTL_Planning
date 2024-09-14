@@ -33,14 +33,13 @@ def main():
     #                        [[0, 0.0], [1, 0]]])
     action_set = [0]
     transitions = np.array([[[0.8, 0.2],[0.2, 0.8]]])
-    initial_state = 1
+    initial_state = 0
     mdp_env = MDP(state_set, action_set, transitions, traffic_light, initial_state)
 
-
     # ---------- Specification Define --------------------
-    safe_frag = LTL_Spec("G(~c U g) & G(~v)", AP_set=['c', 'g', 'v'])
+    # safe_frag = LTL_Spec("G(~c U g) & G(~v)", AP_set=['c', 'g', 'v'])
+    safe_frag = LTL_Spec("G(~g -> ~c) & G(~v)", AP_set=['c', 'g', 'v'])
     scltl_frag = LTL_Spec("F(t)", AP_set=['t'])
-
 
     # ------------- Labelling -----------------------------
     def dyn_labelling(sta_labels, v_pos, v_action):
@@ -92,7 +91,7 @@ def main():
 
     # -------------- Simulation Loop --------------------
     iter = 1
-    while iter < 400:
+    while True:
         iter += 1
         if iter == 150:
             abs_state_env = 0 # change the traffic light
@@ -132,6 +131,9 @@ def main():
         print("decision:", sys_decision)
         print("target_point", target_point)
         print("control_input:", control_input)
+
+        if abs_state_env == 0:
+            print('d')
 
         ego_state = sim.car_dyn(ego_state, control_input, params)
         if ((oppo_car_pos[0] > 0) and (oppo_car_pos[0] < region_size[0])
