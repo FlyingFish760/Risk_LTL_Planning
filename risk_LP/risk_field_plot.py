@@ -2,15 +2,22 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 # from mayavi import mlab
 import numpy as np
-from sim.visualizer import Visualizer
+
 import sim.perception as pept
-import sim.simulator as sim
-from ltl_risk_LP import Risk_LTL_LP
-import risk_field.risk_field as rf
+from LP import Risk_LTL_LP
 from abstraction.abstraction import Abstraction_2
 import mpl_toolkits.mplot3d.art3d as art3d
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+
+def meshgrid(range, res):
+    xbl = 0
+    xbu = range[0]
+    ybl = 0
+    ybu = range[1]
+    grid_x = np.arange(xbl, xbu, res[0])
+    grid_y = np.arange(ybl, ybu, res[1])
+    X, Y = np.meshgrid(grid_x, grid_y)
+    return X, Y
 
 def main():
     # ---------- Environment Setting ---------------------
@@ -25,7 +32,7 @@ def main():
 
     LP_prob = Risk_LTL_LP()
     pcpt_res = (4, 4)
-    X, Y =  rf.torus_meshgrid(map_size, pcpt_res)
+    X, Y =  meshgrid(map_size, pcpt_res)
     car_pos = car_state[:2]
 
     pcpt_dic = pept.gen_pcpt_dic(map_size, square_obs_list, cost=5)
@@ -89,7 +96,7 @@ def main():
         action_vec = abs_model.action_set[int(action_index)]
         action_arrow = np.multiply(action_vec, pcpt_res)
         ax.quiver(traj_pos[0] + pcpt_res[0]/2, traj_pos[1] + pcpt_res[1]/2, 0.1, action_arrow[0], action_arrow[1], 0,
-                  arrow_length_ratio=0.02, color='r', linewidth = 2)
+                  arrow_length_ratio=0.02, color='r', linewidth = 3)
 
 
     # ax.view_init(elev=90, azim=90)

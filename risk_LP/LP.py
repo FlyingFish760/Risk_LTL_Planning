@@ -40,20 +40,15 @@ class Risk_LTL_LP:
         for i in range(self.state_num):
             model.addConstr(lhs[i] == rhs[i])
 
-        obj = 2 * grb.quicksum(y[s, a] * P[s][a][sn]
+        obj =  grb.quicksum(y[s, a] * P[s][a][sn]
                            for a in range(self.action_num)
                            for s in range(self.state_num)
-                           for sn in accept_states) - z[0]
+                           for sn in accept_states)
 
         model.addConstr(grb.quicksum(y[s, a] * c_map[s] for s in range(self.state_num)
-                                     for a in range(self.action_num)) <= 0.8 + z[0])
+                                     for a in range(self.action_num)) <= 0.06)
         model.addConstr(z[0] >= 0)
-        # model.addConstr(grb.quicksum(pi[s] * c_map[s] for s in range(self.state_num)) <= 0.1 + z[0])
-        # for s in range(self.state_num):
-            # Create a max expression for the action values
-            # max_expr = grb.max_([y[s, a] for a in range(self.action_num)])
-            # Add the constraint for each state s
-            # model.addConstr(pi[s] == max_expr)
+
         model.setObjective(obj, grb.GRB.MAXIMIZE)
         # model.setParam('Threads', 4)
         # model.setParam('Presolve', 2)

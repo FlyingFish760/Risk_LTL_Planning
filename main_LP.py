@@ -4,18 +4,16 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from abstraction.MDP import MDP
 from sim.visualizer import Visualizer
 import sim.simulator as sim
-from risk_LP.ltl_risk_LP import Risk_LTL_LP
+from risk_LP.LP import Risk_LTL_LP
 from risk_LP.prod_auto import Product
 from specification.specification import LTL_Spec
 from abstraction.abstraction import Abstraction
-from controller import MPC
+from sim.low_level_controller import MPC
 from abstraction.prod_MDP import Prod_MDP
 
-# Todo: 1) plot risk field 2) local_perception 3) intersection scenarios
 
 
 def main():
@@ -145,7 +143,6 @@ def main():
         plt.gca().set_aspect(1)
         vis.plot_grid(region_size, region_res, label_func, abs_state_env)
         vis.plot_car(ego_pos[0], ego_pos[1], ego_state[2], -control_input[1])
-
         plt.pause(0.001)
 
 
