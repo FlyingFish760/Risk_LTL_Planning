@@ -13,7 +13,7 @@ class Abstraction:
         self.action_set = self.gen_abs_action()
         trans_matrix = self.gen_transitions()
         label_map = self.gen_labels(label_function)
-        self.init_abs_state = [initial_position[0]//self.map_res[0], initial_position[1]//self.map_res[1]]
+        self.init_abs_state = [int(initial_position[0]//self.map_res[0]), int(initial_position[1]//self.map_res[1])]
         initial_state = self.get_state_index(self.init_abs_state)
         state_index_set = np.arange(len(self.state_set))
         action_index_set = np.arange(len(self.action_set))
@@ -91,13 +91,21 @@ class Abstraction:
 
     def trans_func(self, position, action):
         def action_prob(action):
+            # if action == -1:
+            #     prob = np.array([0.0, 0.2, 0.8, 0.0, 0.0])
+            # elif action == 0:
+            #     prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
+            # elif action == 1:
+            #     prob = np.array([0.0, 0.0, 0.8, 0.2, 0.0])
+            # return prob
             if action == -1:
-                prob = np.array([0.0, 0.2, 0.8, 0.0, 0.0])
+                prob = np.array([0.0, 0.8, 0.2, 0.0, 0.0])
             elif action == 0:
                 prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
             elif action == 1:
-                prob = np.array([0.0, 0.0, 0.8, 0.2, 0.0])
+                prob = np.array([0.0, 0.0, 0.2, 0.8, 0.0])
             return prob
+
 
             # if action == -2:
             #     prob = np.array([0.5, 0.4, 0.1, 0.0, 0.0])
@@ -149,9 +157,9 @@ class Abstraction_2:
 
     def abs_action(self):
         vx_set = np.array([-1, 0, 1])
-        # vy_set = np.array([-1, 0, 1])
+        vy_set = np.array([-1, 0, 1])
         # vx_set = np.array([-2, -1, 0, 1, 2])
-        vy_set = np.array([-2, -1, 0, 1, 2])
+        # vy_set = np.array([-2, -1, 0, 1, 2])
         A, B = np.meshgrid(vx_set, vy_set)
         return np.array([A.flatten(), B.flatten()]).T
 

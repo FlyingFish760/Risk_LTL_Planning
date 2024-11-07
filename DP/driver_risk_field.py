@@ -2,7 +2,6 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from risk_field.policy_iteration import PolicyIteration
 
 
 def torus_delta(delta_a):
@@ -129,8 +128,9 @@ def gen_risk_field(range, res, phi):
 if __name__ == '__main__':
     pcpt_range = (20, 20)
     pcpt_res = 1
+    phi = 0.1
 
-    X, Y, Z = gen_risk_field(pcpt_range, pcpt_res)
+    X, Y, Z = gen_risk_field(pcpt_range, pcpt_res, phi)
     perception_list = [([[-dla, -20], [0, dla]], -5), ([[20, dla], [0, dla]], -5)]
 
     cost_map = gen_cost_map(perception_list, dla, res)
@@ -139,9 +139,6 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     surf = ax.plot_surface(X, Y, risk_map, cmap=cm.coolwarm, linewidth = 0, antialiased = False)
     plt.show()
-
-    policy_iter = PolicyIteration(pcpt_range, risk_map, discount_factor =1.0)
-    optimal_policy = policy_iter.run()
 
 
 

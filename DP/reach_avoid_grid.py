@@ -14,6 +14,18 @@ class GridWorld:
         self.target_set = target_set
         self.avoid_set = avoid_set
 
+    def transition_matrix(self):
+        P_matrix = np.zeros((len(self.states), len(self.actions), len(self.states)))
+        for state in self.states:
+            for action in self.actions:
+                transition_probs = self.transition_prob(state, action)
+                for next_state, prob in transition_probs.items():
+                    next_state_index = self.states.index(next_state)
+                    action_index = self.actions.index(action)
+                    state_index = self.states.index(state)
+                    P_matrix[state_index, action_index, next_state_index] = prob
+        return P_matrix
+
     def transition_prob(self, state, action):
         """Define transition probabilities for each action"""
         r, c = state
@@ -42,23 +54,28 @@ class GridWorld:
         # Set transition probabilities
         transition_probs = {}
         transition_probs[intended_next_state] = 0.8  # 80% chance to move as intended
-
-        # 20% chance to move to unintended states (10% each)
         for unintended_state in unintended_next_states[action]:
             transition_probs[unintended_state] = 0.1
 
         # Make sure the sum of probabilities is 1
         return transition_probs
 
+    def reward_map(self):
+        map = {(r, c): -5 for r in range(rows) for c in range(cols)}
+        for state in self.target_set:
+            map[state] = 1000
+        for state in self.avoid_set:
+            map[state] = -100
+        return map
+
     def reward(self, state, action, next_state):
         """Define the reward structure"""
         if next_state in self.target_set:
-            return 100  # Positive reward for reaching the target
+            return 1000  # Positive reward for reaching the target
         elif next_state in self.avoid_set:
             return -100  # High penalty for entering the avoid state
         else:
             return -5  # Step cost to encourage reaching the target quickly
-
 
 # Visualization function
 def visualize_grid(rows, cols, value_function, policy, target_set, avoid_set):
@@ -120,8 +137,14 @@ def visualize_grid(rows, cols, value_function, policy, target_set, avoid_set):
 if __name__ == "__main__":
     # Define the grid dimensions, target, and avoid sets
     rows, cols = 10, 10
-    target_set = {(9, 9)}  # Bottom-right corner is the target
+    target_set = {(8, 8)}  # Bottom-right corner is the target
     avoid_set = {(5, 5), (5, 6)}  # (1, 1) is an avoid state
+    for n in range(rows):
+        avoid_set.add((0, n))
+        avoid_set.add((9, n))
+        avoid_set.add((n, 0))
+        avoid_set.add((n, 9))
+
 
     # Create GridWorld environment
     grid_world = GridWorld(rows, cols, target_set, avoid_set)
@@ -132,8 +155,7 @@ if __name__ == "__main__":
     #     grid_world.actions,
     #     grid_world.transition_prob,
     #     grid_world.reward,
-    #     target_set,
-    #     avoid_set
+    #     discount_factor=0.9
     # )
 
     # Run policy iteration
@@ -142,8 +164,6 @@ if __name__ == "__main__":
         grid_world.actions,
         grid_world.transition_prob,
         grid_world.reward,
-        target_set,
-        avoid_set
     )
 
 

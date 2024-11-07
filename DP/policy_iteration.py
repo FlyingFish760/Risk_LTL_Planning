@@ -1,16 +1,17 @@
+import numpy as np
 # Policy Iteration for Reach-Avoid Problem
-def policy_iteration(states, actions, transition_prob, reward, target_set, avoid_set, discount_factor=0.8, theta=1e-10):
+def policy_iteration(states, actions, transition_prob, reward, discount_factor=0.9, theta=1e-6):
     # Initialize a stochastic policy with equal probabilities for all actions
-    policy = {state: {action: 1 / len(actions) for action in actions} for state in states if state not in target_set and state not in avoid_set}
+    policy = {state: {action: 1 / len(actions) for action in actions} for state in states}
     value_function = {state: 0 for state in states}
+    Q_function = {state: {action: 0 for action in actions} for state in states}
+
 
     while True:
         # Policy Evaluation
         while True:
             delta = 0
             for state in states:
-                if state in target_set or state in avoid_set:
-                    continue
 
                 # Calculate the expected value of the state under the current stochastic policy
                 expected_value = 0
@@ -18,6 +19,7 @@ def policy_iteration(states, actions, transition_prob, reward, target_set, avoid
                     action_value = 0
                     for next_state, prob in transition_prob(state, action).items():
                         action_value += prob * (reward(state, action, next_state) + discount_factor * value_function[next_state])
+                    Q_function[state][action] = action_value
                     expected_value += action_prob * action_value
 
                 delta = max(delta, abs(value_function[state] - expected_value))
@@ -29,8 +31,6 @@ def policy_iteration(states, actions, transition_prob, reward, target_set, avoid
         # Policy Improvement
         policy_stable = True
         for state in states:
-            if state in target_set or state in avoid_set:
-                continue
 
             # Find the best action value
             action_values = {}
@@ -41,15 +41,10 @@ def policy_iteration(states, actions, transition_prob, reward, target_set, avoid
                 action_values[action] = action_value
 
             # Update the policy to be ε-greedy with respect to the action values
-            best_action = max(action_values, key=action_values.get)
             old_action_probs = policy[state].copy()
-            epsilon = 0.1
-            num_actions = len(actions)
+            action_value_sum = sum(action_values.values())
             for action in actions:
-                if action == best_action:
-                    policy[state][action] = 1 - epsilon + epsilon / num_actions
-                else:
-                    policy[state][action] = epsilon / num_actions
+                policy[state][action] = action_values[action] / action_value_sum
 
             if old_action_probs != policy[state]:
                 policy_stable = False

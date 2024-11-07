@@ -92,7 +92,7 @@ def main():
     while True:
         iter += 1
         if iter == 150:
-            abs_state_env = 0 # change the traffic light
+            abs_state_env = 0
             abs_state_sys = [-1, -1]
 
         ax_1.cla()
