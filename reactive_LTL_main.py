@@ -9,10 +9,10 @@ from abstraction.MDP import MDP
 from sim.visualizer import Visualizer
 import sim.simulator as sim
 from risk_LP.ltl_risk_LP import Risk_LTL_LP
-from risk_LP.prod_auto import Product
+from specification.prod_auto import Product
 from specification.specification import LTL_Spec
 from abstraction.abstraction import Abstraction
-from controller import MPC
+from sim.controller import MPC
 from abstraction.prod_MDP import Prod_MDP
 
 
