@@ -1,19 +1,4 @@
 import numpy as np
-import math
-
-
-# def f_dyn(q, u, params):
-#
-#     WB = params['WB']
-#     x, y, theta, v = q
-#     acc, tan_delta = u
-#     q_dot = np.zeros(q.shape)
-#     q_dot[0] = v * np.cos(theta)
-#     q_dot[1] = v * np.sin(theta)
-#     q_dot[2] = v * tan_delta / WB
-#     q_dot[3] = acc
-#
-#     return q_dot
 
 def f_dyn(q, u, params):
 
@@ -27,17 +12,6 @@ def f_dyn(q, u, params):
 
     return q_dot
 
-def f_dyn(q, u, params):
-
-    WB = params['WB']
-    x, y, theta = q
-    v, tan_delta = u
-    q_dot = np.zeros(q.shape)
-    q_dot[0] = v * np.cos(theta)
-    q_dot[1] = v * np.sin(theta)
-    q_dot[2] = v * tan_delta / WB
-
-    return q_dot
 
 def car_dyn(state, input, param):
     p_x, p_y, yaw = state

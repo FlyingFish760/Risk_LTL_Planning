@@ -2,7 +2,6 @@ import numpy as np
 
 Inf = 9999
 
-
 def gen_pcpt_dic(road_size, square_obs_list, cost):
     pcpt_dic = []
     pcpt_dic.append(([[-Inf, -road_size[0] / 2], [0, Inf]], -5))
@@ -11,10 +10,6 @@ def gen_pcpt_dic(road_size, square_obs_list, cost):
     for square_obs in square_obs_list:
         pcpt_dic.append(([[square_obs[0], square_obs[0] + square_obs[2]],
                           [square_obs[1], square_obs[1] + square_obs[3]]], cost))
-
-
-    # pcpt_dic.append(([[-1, 1], [0, road_size[1]]], 0.1))
-
     return pcpt_dic
 
 

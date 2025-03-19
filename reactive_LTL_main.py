@@ -1,17 +1,18 @@
 # author: Shuhao Qi
 # Email: s.qi@tue.nl
-# Date: August 6nd, 2023
+# Date: January 6nd, 2025
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from abstraction.MDP import MDP
 from sim.visualizer import Visualizer
 import sim.simulator as sim
-from risk_LP.LP import Risk_LTL_LP
+from risk_LP.ltl_risk_LP import Risk_LTL_LP
 from risk_LP.prod_auto import Product
 from specification.specification import LTL_Spec
 from abstraction.abstraction import Abstraction
-from sim.low_level_controller import MPC
+from controller import MPC
 from abstraction.prod_MDP import Prod_MDP
 
 
@@ -92,7 +93,7 @@ def main():
     while True:
         iter += 1
         if iter == 150:
-            abs_state_env = 0
+            abs_state_env = 0 # change the traffic light
             abs_state_sys = [-1, -1]
 
         ax_1.cla()
@@ -130,7 +131,7 @@ def main():
         print("target_point", target_point)
         print("control_input:", control_input)
 
-        if abs_state_env == 0:
+        if iter == 120:
             print('d')
 
         ego_state = sim.car_dyn(ego_state, control_input, params)
@@ -143,6 +144,7 @@ def main():
         plt.gca().set_aspect(1)
         vis.plot_grid(region_size, region_res, label_func, abs_state_env)
         vis.plot_car(ego_pos[0], ego_pos[1], ego_state[2], -control_input[1])
+
         plt.pause(0.001)
 
 

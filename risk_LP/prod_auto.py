@@ -4,7 +4,7 @@ from abstraction.abstraction import Abstraction
 from specification.specification import LTL_Spec
 
 class Product:
-    def __init__(self, MDP, DFA_cs, DFA_safe, cost_func):
+    def __init__(self, MDP, DFA_cs, DFA_safe):
         self.MDP = MDP
         self.DFA_cs = DFA_cs
         self.DFA_safe = DFA_safe
@@ -15,32 +15,6 @@ class Product:
         self.prod_action_set = self.MDP.actions
         self.prod_transitions = self.gen_product_transition()
         self.accepting_states, self.trap_states = self.gen_final_states()
-        self.cost_func = cost_func
-
-
-    def product_transition(self, prod_state, action):
-        x, s_cs, s_s = prod_state
-        next_x_prob = self.MDP.transitions[x, action, :]
-        transition_probs = {}
-        for next_x in range(len(next_x_prob)):
-            next_x_label = self.MDP.labelling[next_x]
-            alphabet_cs = self.DFA_cs.get_alphabet(next_x_label)
-            alphabet_s = self.DFA_safe.get_alphabet(next_x_label)
-
-            if self.DFA_cs.transitions.get((str(s_cs), alphabet_cs)) is not None:
-                next_s_cs = self.DFA_cs.transitions.get((str(s_cs), alphabet_cs))
-            else:
-                next_s_cs = s_cs
-
-            if self.DFA_safe.transitions.get((str(s_s), alphabet_s)) is not None:
-                next_s_s = self.DFA_safe.transitions.get((str(s_s), alphabet_s))
-            else:
-                next_s_s = s_s
-
-            next_state = (next_x, int(next_s_cs), int(next_s_s))
-            transition_probs[next_state] = next_x_prob[next_x]
-        return transition_probs
-
 
     def gen_product_transition(self):
         P_matrix = np.zeros((len(self.prod_state_set), len(self.prod_action_set), len(self.prod_state_set)))
@@ -79,7 +53,6 @@ class Product:
                 accepting_states.append(n)
         return accepting_states, trap_states
 
-
     def gen_cost_map(self, cost_func):
         cost_map = np.zeros(len(self.prod_state_set))
         for n in self.trap_states:
@@ -89,22 +62,6 @@ class Product:
                 if ap in label:
                     cost_map[n] += cost
         return cost_map
-
-    def cost(self, prod_state, action, next_prod_state):
-        index = self.prod_state_set.index(next_prod_state)
-        cost_sum = 0
-
-        x, s_cs, s_s = next_prod_state
-        label = self.MDP.labelling[x]
-        if index in self.trap_states:
-            for ap, cost in self.cost_func.items():
-                if ap in label:
-                    cost_sum += cost
-        if index in self.accepting_states:
-            if 't' in label:
-                cost_sum = 10
-        return cost_sum
-
     
     def update_prod_state(self, cur_abs_index, last_product_state):
         _, last_cs_state, last_safe_state  = last_product_state

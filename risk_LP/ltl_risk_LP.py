@@ -12,7 +12,9 @@ class Risk_LTL_LP:
         self.action_num = P.shape[1]  # number of actions
         self.state_num = P.shape[0]  # number of states not in T
         S0 = initial_state  # The initial state
-        gamma = 0.8 # discount factor
+        gamma = 0.9 # discount factor
+        th_hard = 5
+        th_soft = 0.8
         model = grb.Model("risk_lp")
         y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name='x') # occupation measure
         z = model.addVars(1, vtype=grb.GRB.CONTINUOUS, name='z')
@@ -40,21 +42,18 @@ class Risk_LTL_LP:
         for i in range(self.state_num):
             model.addConstr(lhs[i] == rhs[i])
 
-        obj =  grb.quicksum(y[s, a] * P[s][a][sn]
+        obj = 2 * grb.quicksum(y[s, a] * P[s][a][sn]
                            for a in range(self.action_num)
                            for s in range(self.state_num)
-                           for sn in accept_states)
+                           for sn in accept_states) - z[0]
 
         model.addConstr(grb.quicksum(y[s, a] * c_map[s] for s in range(self.state_num)
-                                     for a in range(self.action_num)) <= 0.06)
+                                     for a in range(self.action_num)) <= th_soft + z[0])
+        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for s in range(self.state_num)
+                                     for a in range(self.action_num)) <= th_hard)
         model.addConstr(z[0] >= 0)
 
         model.setObjective(obj, grb.GRB.MAXIMIZE)
-        # model.setParam('Threads', 4)
-        # model.setParam('Presolve', 2)
-        # model.setParam('BarHomogeneous', 1)
-        # model.setParam('Heuristics', 0.02)  # Default is 0.05
-        # model.setParam('Seed', 42)
         model.setParam('MIPGap', 1e-4)
         model.optimize()
         sol = model.getAttr('x', y)

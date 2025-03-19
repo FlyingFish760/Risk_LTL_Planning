@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 # from mayavi import mlab
 import numpy as np
-
 import sim.perception as pept
-from LP import Risk_LTL_LP
+from ltl_risk_LP import Risk_LTL_LP
 from abstraction.abstraction import Abstraction_2
 import mpl_toolkits.mplot3d.art3d as art3d
 
@@ -50,17 +49,10 @@ def main():
     # Z = np.delete(Z, 0, axis=1)
 
     # ---------- Visualization ---------------------
-    # Create a 3D surface plot
-    # mlab.figure(size=(800, 600), bgcolor=(1, 1, 1))
-    # surf = mlab.surf(X, Y, Z, colormap='viridis')
-    # mlab.axes(xlabel='X', ylabel='Y', zlabel='Z')
-    # mlab.colorbar(title='Z', orientation='vertical')
-    # mlab.show()
 
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d', computed_zorder=True)
     plt.axis('off')
-    # plt.axis('equal')
     ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False, alpha=0.7)
     # for obs in square_obs_list:
     #    ax.bar3d(obs[0] + 32, obs[1], 0., obs[2], obs[3], 0.01, color = 'yellow', alpha=1)
@@ -90,18 +82,13 @@ def main():
     traj_state = abs_model.get_state_index(traj_pos)
     for i in range(14):
         traj_pos = [int(a) for a in traj_pos + action_arrow]
-        print(traj_pos)
         state_index = abs_model.get_state_index(traj_pos)
         action_index = optimal_policy[state_index]
         action_vec = abs_model.action_set[int(action_index)]
         action_arrow = np.multiply(action_vec, pcpt_res)
         ax.quiver(traj_pos[0] + pcpt_res[0]/2, traj_pos[1] + pcpt_res[1]/2, 0.1, action_arrow[0], action_arrow[1], 0,
-                  arrow_length_ratio=0.02, color='r', linewidth = 3)
+                  arrow_length_ratio=0.02, color='r', linewidth = 2)
 
-
-    # ax.view_init(elev=90, azim=90)
-    # ax.w_zaxis.line.set_lw(0.)
-    # ax.set_zticks([])
     plt.show()
 
 
