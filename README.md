@@ -1,4 +1,20 @@
-# Risk-aware Planning Framework with LTL Specifications
+<p align="center">
+<h1 align="center"<strong> Risk-Aware Autonomous Driving with Linear Temporal Logic Specifications </strong>
+</h1>
+  <p align="center">
+    Shuhao Qi<sup>1</sup>, Zengjie Zhang <sup>1</sup>, Zhiyong Sun<sup>2</sup> and Sofie Haesaert<sup>1</sup>
+    <br>
+    <sup>1</sup> Eindhoven University of Technology <sup>2</sup> Peking University
+    <br>
+  </p>
+</p>
+
+<p align="center">
+  <a href='https://arxiv.org/abs/2409.09769'>
+    <img src='https://img.shields.io/badge/Arxiv-2409.09769-A42C25?style=flat&logo=arXiv&logoColor=A42C25'></a>
+  <a href='https://www.youtube.com/watch?v=r5kEMW8oPQE'>
+    <img src='https://img.shields.io/youtube/views/r5kEMW8oPQE'></a>
+</p>
 
 ## Overview
 

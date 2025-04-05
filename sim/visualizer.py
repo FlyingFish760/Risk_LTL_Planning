@@ -68,7 +68,8 @@ class Visualizer:
             elif label == 't':
                 c = 'blue'
                 a = 1
-
+            self.ax.set_xlim(0, region_size[0])
+            self.ax.set_ylim(0, region_size[1])
             rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c, alpha=a)
             self.ax.add_patch(rect)
 

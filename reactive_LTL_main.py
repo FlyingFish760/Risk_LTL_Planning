@@ -1,7 +1,6 @@
 # author: Shuhao Qi
 # Email: s.qi@tue.nl
 # Date: January 6nd, 2025
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -59,14 +58,9 @@ def main():
     cost_func = {"c": 5, "v0": 10, "v1": 2}
 
     # ---------- Visualization ---------------------
-    fig = plt.figure()
-    grid = plt.GridSpec(2, 2)
-    ax_1 = fig.add_subplot(grid[0:, 0])
+    fig, ax_1 = plt.subplots(1, 1, figsize=(10, 10))
     plt.axis('off')
     plt.axis('equal')
-    ax_2 = fig.add_subplot(grid[0, 1], projection='3d')
-    ax_3 = fig.add_subplot(grid[1, 1])
-    ax_3.axis('off') # risk measure profile
     vis = Visualizer(ax_1)
 
     # ---------- Initialization --------------------
@@ -97,7 +91,6 @@ def main():
             abs_state_sys = [-1, -1]
 
         ax_1.cla()
-        ax_2.cla()
         ax_1.set_aspect(1)
         ego_pos = ego_state[:2]
         label_func = dyn_labelling(static_label, oppo_car_pos, [-1, 0])
@@ -144,7 +137,6 @@ def main():
         plt.gca().set_aspect(1)
         vis.plot_grid(region_size, region_res, label_func, abs_state_env)
         vis.plot_car(ego_pos[0], ego_pos[1], ego_state[2], -control_input[1])
-
         plt.pause(0.001)
 
 
