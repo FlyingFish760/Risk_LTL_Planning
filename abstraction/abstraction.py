@@ -6,18 +6,21 @@ from scipy.stats import norm
 
 class Abstraction:
 
-    def __init__(self, map_range, map_res, initial_position, label_function):
+    def __init__(self, map_range, map_res, initial_position, label_function, speed_limits):
         self.map_res = map_res
         self.map_shape = None
         self.state_set = self.gen_abs_state(map_range, map_res)
+        self.speed_state_set = self.gen_abs_speed_state(speed_limits)
         self.action_set = self.gen_abs_action()
         trans_matrix = self.gen_transitions()
         label_map = self.gen_labels(label_function)
         self.init_abs_state = [initial_position[0]//self.map_res[0], initial_position[1]//self.map_res[1]]
         initial_state = self.get_state_index(self.init_abs_state)
         state_index_set = np.arange(len(self.state_set))
+        speed_state_index_set = np.arange(len(self.speed_state_set))
+        complete_state_index_set = self.gen_complete_state_index_set(state_index_set, speed_state_index_set)
         action_index_set = np.arange(len(self.action_set))
-        self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state)
+        self.MDP = MDP(complete_state_index_set, action_index_set, trans_matrix, label_map, initial_state)
 
     def update_abs_state(self, position):
         abs_state = [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
@@ -36,6 +39,20 @@ class Abstraction:
         self.map_shape = (len(grid_x), len(grid_y))
         return np.array([X.flatten(), Y.flatten()]).T
 
+    def gen_abs_speed_state(self, speed_limits: list):
+        num_speed_limits = len(speed_limits)
+        speed_state_set = np.empty((num_speed_limits + 1, 2))
+
+        left_range = 0
+        for i, speed in enumerate(speed_limits):
+            right_range = speed
+            speed_range = np.array([left_range, right_range])
+            speed_state_set[i] = speed_range
+            left_range = right_range
+        
+        speed_state_set[num_speed_limits] = np.array([left_range, np.inf])
+        return speed_state_set
+
 
     def gen_abs_action(self):
         # vx_set = np.array([-2, -1, 0, 1, 2])
@@ -45,6 +62,12 @@ class Abstraction:
         A, B = np.meshgrid(vx_set, vy_set)
         return np.array([A.flatten(), B.flatten()]).T
 
+    def gen_complete_state_index_set(self, state_index_set, speed_state_index_set):
+        num_state_indices = len(state_index_set)
+        num_speed_state_indices = len(speed_state_index_set)
+        complete_state_index_set = np.mgrid[0:num_state_indices, 0:num_speed_state_indices] 
+        complete_state_index_set = np.stack(complete_state_index_set, axis=-1).reshape(-1, 2)
+        return complete_state_index_set
 
     def gen_transitions(self):
         P = None
