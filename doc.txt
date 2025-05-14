@@ -1,0 +1,22 @@
+action: [speed, -steering_angle]
+info: custom
+
+1. Init things to know at the beginning
+ - ego_state: the car init location and heading
+ - ego_prod_state: (sys_state, env_state, spec_state)?
+ - static_label: target goal, traffic light, etc.
+ 
+2. Things to modify
+ - abs_state_env
+ - mpd_env: no traffic light in my scenario
+ - safe_frag/scltl_frag: LTL specifications
+ - static_label
+ - cost_func: safety cost of different things
+
+
+3. Potential improvements
+ - the variable abs_state_sys (grid location of the car) is not stored in the Abstraction
+ 
+ 
+state_set: [[0, 0], [0, 1], ..., [3, 3]]
+state_index_set: np.arange(len(self.state_set)): 0, 1, ...
