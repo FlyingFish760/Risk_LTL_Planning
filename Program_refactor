@@ -1,0 +1,8 @@
+1. Make the lines after "if ((oppo_car_pos[0] > 0) and (oppo_car_pos[0] < region_size[0])
+                and (oppo_car_pos[1] > 0) and (oppo_car_pos[1] < region_size[1])):"
+    as a decision_making() function
+
+2. All the model (mdp_sys, mpd_env, prod_mdp, etc.) should be initialized before simulation loop. In contrast, in the 
+simulaiotn loop, the model should only .update() instead of being built again.
+
+3. The initial prod_state might need to be defined according to the initial system state (and safety/ cs initial states)

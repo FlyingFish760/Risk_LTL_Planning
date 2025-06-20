@@ -6,91 +6,114 @@ from scipy.stats import norm
 
 class Abstraction:
 
-    def __init__(self, map_range, map_res, initial_position, label_function):
+    def __init__(self, map_range, map_res, speed_range, speed_res, initial_state, label_function):
+        self.map_range = map_range
         self.map_res = map_res
         self.map_shape = None
-        self.state_set = self.gen_abs_state(map_range, map_res)
+        self.speed_range = speed_range
+        self.speed_res = speed_res
+        self.state_set = self.gen_abs_state(map_range, map_res, speed_range, speed_res)
         self.action_set = self.gen_abs_action()
         trans_matrix = self.gen_transitions()
         label_map = self.gen_labels(label_function)
-        self.init_abs_state = [initial_position[0]//self.map_res[0], initial_position[1]//self.map_res[1]]
-        initial_state = self.get_state_index(self.init_abs_state)
+        self.init_abs_state = [initial_state[0]//self.map_res[0], 
+                               initial_state[1]//self.map_res[1], 
+                               initial_state[3]//self.speed_res]
+        initial_state_index = self.get_state_index(self.init_abs_state)
         state_index_set = np.arange(len(self.state_set))
         action_index_set = np.arange(len(self.action_set))
-        self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state)
+        self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state_index)
 
-    def update_abs_state(self, position):
-        abs_state = [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
-        state_index = self.get_state_index(abs_state)
-        self.init_abs_state = abs_state
-        self.MDP.initial_state = state_index
-
-    def gen_abs_state(self, map_range, map_res):
+    def gen_abs_state(self, map_range, map_res, speed_range, speed_res):
+        # Position dimensions
         xbl = 0
         xbu = int(map_range[0] / map_res[0])
         ybl = 0
         ybu = int(map_range[1] / map_res[1])
+        
+        # Velocity dimension
+        vbl = 0
+        vbu = int(speed_range / speed_res)  # Number of discrete velocity levels
+        
+        # Create grids for each dimension
         grid_x = np.arange(xbl, xbu)
         grid_y = np.arange(ybl, ybu)
-        X, Y = np.meshgrid(grid_x, grid_y)
-        self.map_shape = (len(grid_x), len(grid_y))
-        return np.array([X.flatten(), Y.flatten()]).T
+        grid_v = np.arange(vbl, vbu)
+        
+        # Create 3D meshgrid
+        X, Y, V = np.meshgrid(grid_x, grid_y, grid_v)
+        
+        # Update map_shape
+        self.map_shape = (len(grid_x), len(grid_y), len(grid_v))
+        
+        # Return 3D state array
+        return np.array([X.flatten(), Y.flatten(), V.flatten()]).T
 
 
     def gen_abs_action(self):
         # vx_set = np.array([-2, -1, 0, 1, 2])
         # vy_set = np.array([-2, -1, 0, 1, 2])
-        vx_set = np.array([-1, 0, 1])
-        vy_set = np.array([-1, 0, 1])
-        A, B = np.meshgrid(vx_set, vy_set)
-        return np.array([A.flatten(), B.flatten()]).T
-
+        # vx_set = np.array([-1, 0, 1])
+        # vy_set = np.array([-1, 0, 1])
+        x_set = np.array([0, 1])
+        y_set = np.array([-1, 0, 1])
+        v_set = np.array([-1, 0, 1])
+        A, B, C = np.meshgrid(x_set, y_set, v_set)
+        return np.array([A.flatten(), B.flatten(), C.flatten()]).T
 
     def gen_transitions(self):
         P = None
-        for i in range(len(self.state_set)):
+        for state in self.state_set:
             P_s = None
-            for n in range(len(self.action_set)):
-                position = (i % self.map_shape[0], int(i / self.map_shape[0]))
-                action = self.action_set[n]
-                P_s_a = self.trans_func(position, action)
+            for action in self.action_set:
+                P_s_a = self.trans_func(state, action)
                 P_s = np.vstack((P_s, P_s_a)) if P_s is not None else P_s_a
             P_s = np.expand_dims(P_s, axis=0)
             P = np.vstack((P, P_s)) if P is not None else P_s
         return P
 
-
     def gen_labels(self, label_function):
         # The setting of resolution should correspond to regions of each label
         label_map = np.array(["_"]*len(self.state_set), dtype=object)
         for n in range(len(self.state_set)):
-            for region, label in label_function.items():
-                xbl, xbu, ybl, ybu = region
+            for state_region, label in label_function.items():
+                xbl, xbu, ybl, ybu, vbl, vbu = state_region
+
                 xbl = xbl // self.map_res[0]
                 xbu = xbu // self.map_res[0]
                 ybl = ybl // self.map_res[1]
                 ybu = ybu // self.map_res[1]
-                if xbl <= self.state_set[n, 0] < xbu and ybl <= self.state_set[n, 1] < ybu:
+                vbl = vbl // self.speed_res
+                vbu = vbu // self.speed_res
+                if xbl <= self.state_set[n, 0] < xbu and ybl <= self.state_set[n, 1] < ybu and vbl <= self.state_set[n, 2] < vbu:
                     label_map[n] = label if label_map[n] == '_' else label_map[n] + label
+        
+        # def sanity_gen_labels(label_map):
+        #     for i, label in enumerate(label_map):
+        #         if label != "_":
+        #             print(f"state {self.state_set[i]} has label {label}")
+        # sanity_gen_labels(label_map)
+        
         return label_map
 
-
+    def get_abs_state(self, system_state):
+        abs_state = [int(system_state[0]//self.map_res[0]), 
+                     int(system_state[1]//self.map_res[1]), 
+                     int(system_state[3]//self.speed_res)]
+        return abs_state
+    
     def get_state_index(self, abs_state):
         state_index = self.state_set.tolist().index(abs_state)
         return state_index
 
-    def get_abs_ind_state(self, position):
-        abs_state = [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
-        state_index = self.get_state_index(abs_state)
-        return state_index, abs_state
+    # def get_abs_ind_state(self, position):
+    #     abs_state = [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
+    #     state_index = self.get_state_index(abs_state)
+    #     return state_index, abs_state
 
 
-    def get_abs_state(self, position):
-        return [int(position[0]//self.map_res[0]), int(position[1]//self.map_res[1])]
-
-
-    def trans_func(self, position, action):
-        def action_prob(action):
+    def trans_func(self, state, action):
+        def action_pos_prob(action):
             if action == -1:
                 prob = np.array([0.0, 0.2, 0.8, 0.0, 0.0])
             elif action == 0:
@@ -110,20 +133,65 @@ class Abstraction:
             # elif action == 2:
             #     prob = np.array([0.0, 0.0, 0.1, 0.4, 0.5])
 
-        # map = self.state_set.reshape([self.map_shape[1], self.map_shape[0], 2]).transpose((1, 0, 2))
-        P_sn = np.zeros(len(self.state_set)).reshape(self.map_shape)
+        def action_velocity_prob(action):
+            if action == -1:
+                prob = np.array([0.0, 0.3, 0.7, 0.0, 0.0])
+            elif action == 0:
+                prob = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
+            elif action == 1:
+                prob = np.array([0.0, 0.0, 0.7, 0.3, 0.0])
+            return prob
+        
+        state_shape = (self.map_range[0] // self.map_res[0], 
+                       self.map_range[1] // self.map_res[1], 
+                       self.speed_range // self.speed_res)
+        P_sn = np.zeros(len(self.state_set)).reshape(state_shape)
 
-        prob_x = action_prob(action[0])
-        prob_y = action_prob(action[1])
-        prob_map = np.outer(prob_x, prob_y)
+        prob_x = action_pos_prob(action[0])
+        prob_y = action_pos_prob(action[1])
+        prob_v = action_velocity_prob(action[2])
+        
+        # Create 3D probability map using outer product twice
+        prob_map_2d = np.outer(prob_x, prob_y)  # First create 2D
+        prob_map = np.zeros((len(prob_x), len(prob_y), len(prob_v)))  # Then expand to 3D
+        for k in range(len(prob_v)):
+            prob_map[:, :, k] = prob_map_2d * prob_v[k]
+
+        # def sanity_check_prob_map(prob_map):
+        #     print("=== Sanity Check for prob_map ===")
+        #     print(f"prob_map shape: {prob_map.shape}")
+        #     print(f"Total elements: {prob_map.size}")
+            
+        #     non_zero_count = 0
+        #     for i in range(prob_map.shape[0]):
+        #         for j in range(prob_map.shape[1]):
+        #             for k in range(prob_map.shape[2]):
+        #                 if prob_map[i, j, k] != 0:
+        #                     print(f"Non-zero at index ({i}, {j}, {k}): {prob_map[i, j, k]}")
+        #                     non_zero_count += 1
+            
+        #     print(f"Total non-zero elements: {non_zero_count}")
+        #     print(f"Sum of all elements: {np.sum(prob_map)}")
+        #     print("=== End Sanity Check ===\n")
+
+        # print("action", action)
+        # sanity_check_prob_map(prob_map)
+        
         for m in range(len(prob_x)):
             for n in range(len(prob_y)):
-                if (0 <= position[0] + m - 2 <= self.map_shape[0] -1) and (0 <= position[1] + n - 2 <= self.map_shape[1]-1):
-                    P_sn[position[0] + m - 2, position[1] + n - 2] = prob_map[m, n]
+                for k in range(len(prob_v)):
+                    if (0 <= state[0] + m - 2 <= state_shape[0] - 1) and \
+                       (0 <= state[1] + n - 2 <= state_shape[1] - 1) and \
+                       (0 <= state[2] + k - 2 <= state_shape[2] - 1):
+                        P_sn[state[0] + m - 2, state[1] + n - 2, state[2] + k - 2] = prob_map[m, n, k]
         return P_sn.flatten(order='F')
 
 
-
+    def update_abs_init_state(self, system_state):
+        abs_state = self.get_abs_state(system_state)
+        state_index = self.get_state_index(abs_state)
+        self.init_abs_state = abs_state
+        self.MDP.initial_state = state_index
 
 
 

@@ -19,6 +19,7 @@ class LTL_Spec:
     def translate(self, spec):
         parser = LTLfParser()
         formula = parser(spec)  # returns an LTLfFormula
+        print("formula:", formula)
         dfa_dot = formula.to_dfa()
         dfa_graph = self.to_network(dfa_dot)
 

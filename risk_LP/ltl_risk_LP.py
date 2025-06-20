@@ -2,6 +2,12 @@
 import gurobipy as grb
 import numpy as np
 
+OPTIONS = {
+    "WLSACCESSID": "69fa444d-78b3-49c3-86b9-4836d12779cc",
+    "WLSSECRET": "2d8c3a9f-e2c9-4286-99c1-99324224b9d8",
+    "LICENSEID": 2659583,
+}
+
 class Risk_LTL_LP:
 
     def __init__(self):
@@ -15,7 +21,9 @@ class Risk_LTL_LP:
         gamma = 0.9 # discount factor
         th_hard = 5
         th_soft = 0.8
-        model = grb.Model("risk_lp")
+
+        env = grb.Env(params=OPTIONS)
+        model = grb.Model("risk_lp", env=env)
         y = model.addVars(self.state_num, self.action_num, vtype=grb.GRB.CONTINUOUS, name='x') # occupation measure
         z = model.addVars(1, vtype=grb.GRB.CONTINUOUS, name='z')
 
@@ -56,10 +64,44 @@ class Risk_LTL_LP:
         model.setObjective(obj, grb.GRB.MAXIMIZE)
         model.setParam('MIPGap', 1e-4)
         model.optimize()
-        sol = model.getAttr('x', y)
-        relax = model.getAttr('x', z)
-        print("relax:", relax)
-        return sol
+        
+        # Check if the model is feasible
+        if model.status == grb.GRB.OPTIMAL:
+            sol = model.getAttr('x', y)
+            relax = model.getAttr('x', z)
+            print("relax:", relax)
+            return sol
+        elif model.status == grb.GRB.INFEASIBLE:
+            print("ERROR: LP problem is infeasible!")
+            print("This usually means the constraints are too restrictive.")
+            print("Suggestions:")
+            print("1. Increase th_hard or th_soft thresholds")
+            print("2. Check if the cost function values are too high")
+            print("3. Verify that accepting states are reachable")
+            
+            # Try to compute IIS (Irreducible Inconsistent Subsystem)
+            model.computeIIS()
+            print("IIS constraints:")
+            for c in model.getConstrs():
+                if c.IISConstr:
+                    print(f"  {c.constrName}")
+            
+            return None
+        elif model.status == grb.GRB.UNBOUNDED:
+            print("ERROR: LP problem is unbounded!")
+            return None
+        elif model.status == grb.GRB.INF_OR_UNBD:
+            print("ERROR: LP problem is infeasible or unbounded!")
+            print("This usually means the constraints are too restrictive or there's an issue with the formulation.")
+            print("Suggestions:")
+            print("1. Increase th_hard from 5 to 10 or higher")
+            print("2. Increase th_soft from 0.8 to 2.0 or higher")
+            print("3. Reduce cost function values")
+            print(f"Current th_hard: {th_hard}, th_soft: {th_soft}")
+            return None
+        else:
+            print(f"ERROR: LP solver returned status {model.status}")
+            return None
 
     
     def extract(self, occup_dict):

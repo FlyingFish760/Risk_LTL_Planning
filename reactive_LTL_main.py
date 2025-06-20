@@ -42,16 +42,21 @@ def main():
     # ------------- Labelling -----------------------------
     def dyn_labelling(sta_labels, v_pos, v_action):
         labels = sta_labels.copy()
-        g_x = int(np.floor(v_pos[0] / region_res[0]))
+        g_x = int(np.floor(v_pos[0] / region_res[0]))   # Convert postion of opposite vehicle to grid index
         g_y = int(np.floor(v_pos[1] / region_res[1]))
-        v_1 = ((g_x + min(0, v_action[0])) * region_res[0], (g_x + max(1, 1 + v_action[0])) * region_res[0],
-                  (g_y + min(0, v_action[1])) * region_res[1], (g_y + max(1, 1 + v_action[1])) * region_res[1])
-        v_0 = (g_x * region_res[0], (g_x + 1) * region_res[0], g_y * region_res[1], (g_y + 1) * region_res[1])
+        v_1 = ((g_x + min(0, v_action[0])) * region_res[0],   # The next cell the opponent is moving into
+                (g_x + max(1, 1 + v_action[0])) * region_res[0],
+                (g_y + min(0, v_action[1])) * region_res[1], 
+                (g_y + max(1, 1 + v_action[1])) * region_res[1])
+        v_0 = (g_x * region_res[0],    # Current opponent cell (this is the immediate danger zone)
+               (g_x + 1) * region_res[0], 
+               g_y * region_res[1], 
+               (g_y + 1) * region_res[1])
         labels[v_0] = "v0"
         labels[v_1] = "v1"
         return labels
 
-    static_label = {(10, 20, 10, 15): "c",
+    static_label = {(10, 20, 10, 15): "c",   # (x1, x2, y1, y2)
                     (10, 15, 15, 20): "c",
                     (15, 20, 15, 20): "t"}
     # cost_func = {"safe": 100, "co_safe": 0}
@@ -77,7 +82,7 @@ def main():
     oppo_car_pos = oppo_car_state[:2]
 
     label_func = dyn_labelling(static_label, oppo_car_pos, [-1, 0])
-    abs_model = Abstraction(region_size, region_res, ego_pos, label_func)
+    abs_model = Abstraction(region_size, region_res, ego_pos, label_func)   
     oppo_abs_state = abs_model.get_abs_state(oppo_car_pos)
     target_abs_state_sys = None
     occ_measure = None
@@ -88,7 +93,7 @@ def main():
         iter += 1
         if iter == 150:
             abs_state_env = 0 # change the traffic light
-            abs_state_sys = [-1, -1]
+            abs_state_sys = [-1, -1]   # force re-plan
 
         ax_1.cla()
         ax_1.set_aspect(1)
@@ -97,9 +102,10 @@ def main():
 
         # ----------- Abstraction -----------------------------
         abs_model.update_abs_state(ego_pos)
-        if ((abs_state_sys != abs_model.init_abs_state) or
-                (oppo_abs_state != abs_model.get_abs_state(oppo_car_pos)) or
-                (occ_measure is None)): # replan only when the state changes
+        
+        if ((abs_state_sys != abs_model.init_abs_state) or   # The ego vehicle moves to a new grid cell
+                (oppo_abs_state != abs_model.get_abs_state(oppo_car_pos)) or   # The opponent vehicle moves to a new cell
+                (occ_measure is None)): # replan only when the state changes   # There's no existing plan
             abs_model = Abstraction(region_size, region_res, ego_pos, label_func)
             mdp_sys = abs_model.MDP
             mdp_prod = Prod_MDP(mdp_sys, mdp_env)
@@ -120,9 +126,10 @@ def main():
 
         target_point = target_abs_state_sys * 5 + np.array([2.5, 2.5])
         control_input = mpc_con.solve(ego_state, target_point)
-        print("decision:", sys_decision)
-        print("target_point", target_point)
-        print("control_input:", control_input)
+        # print("decision:", sys_decision)
+        # print("target_point", target_point)
+        # print("control_input:", control_input)
+        print("ego_pos:", ego_pos)
 
         if iter == 120:
             print('d')

@@ -14,11 +14,21 @@ def f_dyn(q, u, params):
 
 
 def car_dyn(state, input, param):
-    p_x, p_y, yaw = state
-    velocity, angle_vec = input
+    """
+    state: [x, y, theta, v]
+    input: [a, angel_vec]
+    """
+    p_x, p_y, yaw, velocity = state
+    acceleration, angel_vec = input
+    
+    # Update velocity using acceleration
+    new_velocity = velocity + acceleration * param['dt']
+    
+    # Update position and orientation using current velocity
     new_state = [p_x + np.cos(yaw) * velocity * param['dt'],
-             p_y + np.sin(yaw) * velocity * param['dt'],
-             yaw + velocity * angle_vec * param['dt'] / param['WB']]
+                 p_y + np.sin(yaw) * velocity * param['dt'],
+                 yaw + velocity * np.tan(angel_vec) * param['dt'] / param['WB'],
+                 new_velocity]
     return new_state
 
 

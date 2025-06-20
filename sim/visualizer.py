@@ -48,7 +48,9 @@ class Visualizer:
             self.ax.plot([0, region_size[0]], [y, y], color='black')
 
         for region, label in label_func.items():
-            xbl, xbu, ybl, ybu = region
+            xbl, xbu, ybl, ybu, _, _ = region
+            
+                
             xbl = max(0, xbl)
             xbu = min(region_size[0], xbu)
             ybl = max(0, ybl)
