@@ -6,8 +6,8 @@ class MPC:
     def __init__(self, car_para, horizon_steps):
         self.x_dim = 4
         self.u_dim = 2
-        self.v_bound = [-3, 3]
-        self.a_bound = [-2, 2]
+        self.v_bound = [0, 100]
+        self.a_bound = [-50, 50]
         self.delta_bound = [-1, 1]
         self.dt = car_para['dt']
         self.WB = car_para['WB']

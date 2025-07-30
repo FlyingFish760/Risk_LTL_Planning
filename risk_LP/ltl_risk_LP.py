@@ -19,7 +19,7 @@ class Risk_LTL_LP:
         self.state_num = P.shape[0]  # number of states not in T
         S0 = initial_state  # The initial state
         gamma = 0.9 # discount factor
-        th_hard = 5
+        th_hard = 10
         th_soft = 0.8
 
         env = grb.Env(params=OPTIONS)

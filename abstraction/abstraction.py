@@ -184,6 +184,15 @@ class Abstraction:
                        (0 <= state[1] + n - 2 <= state_shape[1] - 1) and \
                        (0 <= state[2] + k - 2 <= state_shape[2] - 1):
                         P_sn[state[0] + m - 2, state[1] + n - 2, state[2] + k - 2] = prob_map[m, n, k]
+
+        # Normalize the transition probabilities (since some probabilities are filtered)
+        total = np.sum(P_sn)
+        if total > 0:
+            P_sn /= total
+
+        # print("state:", state)
+        # print("action:", action)
+        # print("P_sn:", P_sn)
         return P_sn.flatten(order='F')
 
 
@@ -193,6 +202,161 @@ class Abstraction:
         self.init_abs_state = abs_state
         self.MDP.initial_state = state_index
 
+    def check_P_matrix_bounds(self):
+        """
+        Check if the P matrix contains any transitions to out-of-bounds states.
+        This function validates that all transitions in the P matrix respect state space boundaries.
+        
+        Returns:
+            dict: Dictionary containing check results with keys:
+                - 'valid': Boolean indicating if all transitions are valid
+                - 'invalid_transitions': List of invalid transitions found
+                - 'summary': String summary of the check results
+        """
+        print("=== Checking P Matrix for Out-of-Bounds Transitions ===")
+        
+        # Get state space bounds
+        state_bounds = {
+            'x_max': self.map_range[0] // self.map_res[0] - 1,
+            'y_max': self.map_range[1] // self.map_res[1] - 1,
+            'v_max': self.speed_range // self.speed_res - 1
+        }
+        
+        print(f"State space bounds: x=[0,{state_bounds['x_max']}], y=[0,{state_bounds['y_max']}], v=[0,{state_bounds['v_max']}]")
+        print(f"Total states: {len(self.state_set)}")
+        print(f"Total actions: {len(self.action_set)}")
+        
+        invalid_transitions = []
+        P_matrix = self.MDP.transitions
+        
+        # Check each state-action pair
+        for state_idx in range(len(self.state_set)):
+            current_state = self.state_set[state_idx]
+            
+            for action_idx in range(len(self.action_set)):
+                current_action = self.action_set[action_idx]
+                
+                # Get transition probabilities for this state-action pair
+                transition_probs = P_matrix[state_idx, action_idx, :]
+                
+                # Check each possible next state
+                for next_state_idx in range(len(self.state_set)):
+                    if transition_probs[next_state_idx] > 0:  # Non-zero transition probability
+                        next_state = self.state_set[next_state_idx]
+                        
+                        # Check if next state is within bounds
+                        if (next_state[0] < 0 or next_state[0] > state_bounds['x_max'] or
+                            next_state[1] < 0 or next_state[1] > state_bounds['y_max'] or
+                            next_state[2] < 0 or next_state[2] > state_bounds['v_max']):
+                            
+                            invalid_transitions.append({
+                                'from_state': current_state.tolist(),
+                                'from_state_idx': state_idx,
+                                'action': current_action.tolist(),
+                                'action_idx': action_idx,
+                                'to_state': next_state.tolist(),
+                                'to_state_idx': next_state_idx,
+                                'probability': transition_probs[next_state_idx]
+                            })
+        
+        # Report results
+        if invalid_transitions:
+            print(f"❌ FOUND {len(invalid_transitions)} INVALID TRANSITIONS!")
+            print("\nFirst 10 invalid transitions:")
+            for i, trans in enumerate(invalid_transitions[:10]):
+                print(f"  {i+1}: State {trans['from_state']} --{trans['action']}--> State {trans['to_state']} (prob={trans['probability']:.6f})")
+            
+            if len(invalid_transitions) > 10:
+                print(f"  ... and {len(invalid_transitions) - 10} more invalid transitions")
+                
+            summary = f"INVALID: Found {len(invalid_transitions)} transitions to out-of-bounds states"
+        else:
+            print("✅ All transitions are valid - no out-of-bounds states found")
+            summary = "VALID: All transitions respect state space boundaries"
+        
+        print("=== End P Matrix Bounds Check ===\n")
+        
+        return {
+            'valid': len(invalid_transitions) == 0,
+            'invalid_transitions': invalid_transitions,
+            'summary': summary
+        }
+
+    def check_state_action_simple_addition(self):
+        """
+        Check which state-action pairs would lead to out-of-bounds if using simple addition.
+        This helps identify potential issues with the LP solver's target state calculation.
+        
+        Returns:
+            dict: Dictionary containing check results
+        """
+        print("=== Checking State+Action Simple Addition for Out-of-Bounds ===")
+        
+        # Get state space bounds
+        state_bounds = {
+            'x_max': self.map_range[0] // self.map_res[0] - 1,
+            'y_max': self.map_range[1] // self.map_res[1] - 1,
+            'v_max': self.speed_range // self.speed_res - 1
+        }
+        
+        problematic_combinations = []
+        
+        # Check each state-action combination
+        for state_idx in range(len(self.state_set)):
+            current_state = self.state_set[state_idx]
+            
+            for action_idx in range(len(self.action_set)):
+                action = self.action_set[action_idx]
+                
+                # Calculate target state using simple addition (as LP solver does)
+                target_state = current_state + action
+                
+                # Check if target state is out of bounds
+                if (target_state[0] < 0 or target_state[0] > state_bounds['x_max'] or
+                    target_state[1] < 0 or target_state[1] > state_bounds['y_max'] or
+                    target_state[2] < 0 or target_state[2] > state_bounds['v_max']):
+                    
+                    problematic_combinations.append({
+                        'state': current_state.tolist(),
+                        'state_idx': state_idx,
+                        'action': action.tolist(),
+                        'action_idx': action_idx,
+                        'target': target_state.tolist(),
+                        'out_of_bounds_dims': []
+                    })
+                    
+                    # Identify which dimensions are out of bounds
+                    combo = problematic_combinations[-1]
+                    if target_state[0] < 0 or target_state[0] > state_bounds['x_max']:
+                        combo['out_of_bounds_dims'].append(f"x={target_state[0]} (bounds: [0,{state_bounds['x_max']}])")
+                    if target_state[1] < 0 or target_state[1] > state_bounds['y_max']:
+                        combo['out_of_bounds_dims'].append(f"y={target_state[1]} (bounds: [0,{state_bounds['y_max']}])")
+                    if target_state[2] < 0 or target_state[2] > state_bounds['v_max']:
+                        combo['out_of_bounds_dims'].append(f"v={target_state[2]} (bounds: [0,{state_bounds['v_max']}])")
+        
+        # Report results
+        if problematic_combinations:
+            print(f"⚠️  FOUND {len(problematic_combinations)} STATE+ACTION COMBINATIONS THAT LEAD OUT-OF-BOUNDS!")
+            print("\nFirst 10 problematic combinations:")
+            for i, combo in enumerate(problematic_combinations[:10]):
+                print(f"  {i+1}: State {combo['state']} + Action {combo['action']} = {combo['target']}")
+                print(f"      Out of bounds: {', '.join(combo['out_of_bounds_dims'])}")
+            
+            if len(problematic_combinations) > 10:
+                print(f"  ... and {len(problematic_combinations) - 10} more problematic combinations")
+                
+            summary = f"PROBLEMATIC: Found {len(problematic_combinations)} state+action combinations leading out-of-bounds"
+        else:
+            print("✅ All state+action combinations stay within bounds")
+            summary = "VALID: All state+action combinations stay within bounds"
+        
+        print("=== End State+Action Simple Addition Check ===\n")
+        
+        return {
+            'valid': len(problematic_combinations) == 0,
+            'problematic_combinations': problematic_combinations,
+            'summary': summary
+        }
 
 
 class Abstraction_2:

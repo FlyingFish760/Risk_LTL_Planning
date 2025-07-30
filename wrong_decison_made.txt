@@ -1,0 +1,11 @@
+check if the problem is due to the initial prod_state
+-> check the prod_state updated
+
+check the P_matrix for invalid transitions:
+
+
+
+
+
+
+
