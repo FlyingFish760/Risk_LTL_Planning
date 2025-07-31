@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import gurobipy as grb
 import numpy as np
-# from abstraction.MDP import MDP
-from MDP import MDP
+from abstraction.MDP import MDP
 from scipy.stats import norm
 
 class Abstraction:

@@ -40,7 +40,7 @@ def dyn_labelling(sta_labels, speed_sign):
 
 def cal_target_ref(target_abs_state, region_res, speed_res):
     target_ref_0 = target_abs_state[0] * region_res[0] + region_res[0] / 2
-    target_ref_1 = target_abs_state[1] * region_res[1] + region_res[1] / 2
+    target_ref_1 = target_abs_state[1] * region_res[1]   # no puls region_res[0] / 2, becuase of the symmetric ey coordinate
     target_ref_2 = target_abs_state[2] * speed_res + speed_res / 2
     return np.array([target_ref_0, target_ref_1, target_ref_2])
 
@@ -152,17 +152,17 @@ def cal_target_ref(target_abs_state, region_res, speed_res):
 
 
 def main():
-    # ---------- MDP Environment  ---------------------
-    # Create a trivial MDP with one state and no actions
-    state_set = [0]
-    action_set = [0]
-    transitions = np.array([[[1.0]]])  # Stay in state 0
-    initial_state = 0
-    mdp_env = MDP(state_set, action_set, transitions, ["e"], initial_state)
+    # # ---------- MDP Environment  ---------------------
+    # # Create a trivial MDP with one state and no actions
+    # state_set = [0]
+    # action_set = [0]
+    # transitions = np.array([[[1.0]]])  # Stay in state 0
+    # initial_state = 0
+    # mdp_env = MDP(state_set, action_set, transitions, ["e"], initial_state)
 
     # ---------- MPD System (Abstraction) --------------------
-    region_size = (20, 20)
-    region_res = (5, 5)   # Now region_size[1]/region_res[1] must be odd
+    region_size = (50, 10)
+    region_res = (5, 2)   # Now region_size[1]/region_res[1] must be odd
     max_speed = 80
     speed_res = 10
 
@@ -174,10 +174,10 @@ def main():
     #                (0, 20, 0, 20, 0, SPEED_LOW_BOUND): "s"}    # "s" for "slow"
     # label_func = {(15, 20, 5, 10, 0, max_speed): "t",
     #                (5, 20, 5, 10, speed_limit, max_speed): "o"}   # "o" for "overspeed"
-    label_func = {(15, 20, 5, 10, 0, max_speed): "t",
-                   (5, 10, 5, 10, 0, max_speed): "o"}   # "o" for "obstacle"
+    label_func = {(45, 50, 8, 10, 0, max_speed): "t",
+                   (20, 25, 8, 10, 0, max_speed): "o"}   # "o" for "obstacle"
     
-    ego_state = np.array([2.5, 12.5, np.pi / 2, 0])
+    ego_state = np.array([0, 0, np.pi / 2, 0])
 
     abs_model = Abstraction(region_size, region_res, max_speed, speed_res, ego_state, label_func) 
 
@@ -206,11 +206,11 @@ def main():
     vis = Visualizer(ax_1)
 
     # ---------- Initialization --------------------
-    abs_state_env = 0
+    # abs_state_env = 0
     abs_state_sys = abs_model.get_abs_state(ego_state) 
     # oppo_abs_state = abs_model.get_abs_state(init_oppo_car_pos)  
 
-    prod_state = (64, 1, 2)   # Initial product MDP state
+    prod_state = (0, 1, 1)   # Initial product MDP state
 
     target_abs_state_sys = None
     occ_measure = None
@@ -236,8 +236,9 @@ def main():
                 (occ_measure is None)):   # There's no occupation measure
             # abs_model = Abstraction(region_size, region_res, ego_pos, label_func)
             mdp_sys = abs_model.MDP
-            mdp_prod = Prod_MDP(mdp_sys, mdp_env)
-            prod_auto = Product(mdp_prod.MDP, scltl_frag.dfa, safe_frag.dfa)
+            # mdp_prod = Prod_MDP(mdp_sys, mdp_env)
+            # prod_auto = Product(mdp_prod.MDP, scltl_frag.dfa, safe_frag.dfa)
+            prod_auto = Product(mdp_sys, scltl_frag.dfa, safe_frag.dfa)
             P_matrix = prod_auto.prod_transitions
             cost_map = prod_auto.gen_cost_map(cost_func)
             
@@ -346,8 +347,9 @@ def main():
             abs_state_sys = abs_model.get_abs_state(ego_state)
             abs_state_sys_index = abs_model.get_state_index(abs_state_sys)
             # oppo_abs_state = abs_model.get_abs_state(oppo_car_pos)
-            state_sys_env_index = mdp_prod.get_prod_state_index((abs_state_sys_index, abs_state_env))
-            prod_state_index, prod_state  = prod_auto.update_prod_state(state_sys_env_index, prod_state)
+            # state_sys_env_index = mdp_prod.get_prod_state_index((abs_state_sys_index, abs_state_env))
+            # prod_state_index, prod_state  = prod_auto.update_prod_state(state_sys_env_index, prod_state)
+            prod_state_index, prod_state  = prod_auto.update_prod_state(abs_state_sys_index, prod_state)
             
             # print(f"Debug: ego_state={ego_state}")
             # print(f"Debug: abs_state_sys={abs_state_sys}")
@@ -384,7 +386,8 @@ def main():
 
         ego_pos = ego_state[:2]
         plt.gca().set_aspect(1)
-        vis.plot_grid(region_size, region_res, label_func, abs_state_env)
+        # vis.plot_grid(region_size, region_res, label_func, abs_state_env)
+        vis.plot_grid(region_size, region_res, label_func)
         vis.plot_car(ego_pos[0], ego_pos[1], ego_state[2], -control_input[1])
         plt.pause(0.001)
 
