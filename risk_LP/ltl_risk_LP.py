@@ -40,7 +40,7 @@ class Risk_LTL_LP:
 
         xi = []
         for sn in range(self.state_num):  # compute incoming occupation
-            # from s to s' sum_a x(s, a) P(s,a,s)'
+            # from s to s' sum_a x(s, a) P(s,a,s')
             xi += [gamma * grb.quicksum(
                    y[s, a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
 
@@ -57,8 +57,9 @@ class Risk_LTL_LP:
 
         model.addConstr(grb.quicksum(y[s, a] * c_map[s] for s in range(self.state_num)
                                      for a in range(self.action_num)) <= th_soft + z[0])
-        model.addConstr(grb.quicksum(y[s, a] * c_map[s] for s in range(self.state_num)
-                                     for a in range(self.action_num)) <= th_hard)
+        # model.addConstr(grb.quicksum(y[s, a] * c_map[s] for s in range(self.state_num)
+        #                              for a in range(self.action_num)) <= th_hard)
+        model.addConstr(z[0] + th_soft <= th_hard)
         model.addConstr(z[0] >= 0)
 
         model.setObjective(obj, grb.GRB.MAXIMIZE)
