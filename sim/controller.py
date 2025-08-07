@@ -1,14 +1,20 @@
 import casadi as ca
 import numpy as np
 
+
+
 class MPC:
 
     def __init__(self, car_para, horizon_steps):
         self.x_dim = 4
         self.u_dim = 2
-        self.v_bound = [0, 100]
-        self.a_bound = [-50, 50]
-        self.delta_bound = [-1, 1]
+
+        self.v_bound = [0, 10]
+        self.ephi_bound = [-np.pi / 2, np.pi / 2]
+        
+        self.a_bound = [-5, 5]
+        self.deltaphi_bound = [-1, 1]  
+
         self.dt = car_para['dt']
         self.WB = car_para['WB']
         self.car_para = car_para
@@ -16,30 +22,34 @@ class MPC:
         self.opti = ca.Opti()
         self.X = None
         self.U = None
-        self.X_ref = self.opti.parameter(3)   # (xref, yref, vref)
+        self.X_ref = self.opti.parameter(3)   # (r_ref, ey_ref, v_ref)
         self.X_0 = self.opti.parameter(self.x_dim)
         self.prob_init()
 
     def prob_init(self):
         # Define the state and control variables
-        x = ca.SX.sym('x')  # x position
-        y = ca.SX.sym('y')  # y position
-        theta = ca.SX.sym('theta')  # orientation angle 
-        v = ca.SX.sym('v')  # velocity 
-        a = ca.SX.sym('a')  # acceleration 
-        delta = ca.SX.sym('delta')  # steering angle 
+        r = ca.SX.sym('r')  
+        ey = ca.SX.sym('ey')  
+        ephi = ca.SX.sym('ephi')  
+        v = ca.SX.sym('v') 
+        
+        a = ca.SX.sym('a')  
+        deltaphi = ca.SX.sym('deltaphi')  
 
-        states = ca.vertcat(x, y, theta, v)  
-        controls = ca.vertcat(a, delta)  
+        states = ca.vertcat(r, ey, ephi, v)  
+        controls = ca.vertcat(a, deltaphi)  
 
         # Bicycle abstraction dynamics
-        xdot = v * ca.cos(theta)
-        ydot = v * ca.sin(theta)
-        thetadot = v / self.WB * ca.tan(delta)
-        vdot = a  
+        # Assume road curvature κ(t) = 0 for straight road (can be parameterized later)
+        kappa = 0  # road curvature
+        
+        rdot = v * ca.cos(ephi) / (1 - ey * kappa)
+        eydot = v * ca.sin(ephi)
+        ephidot = v * (ca.tan(deltaphi) / self.WB - kappa * ca.cos(ephi) / (1 - kappa * ey))
+        vdot = a
 
         # Control horizon
-        state_dot = ca.vertcat(xdot, ydot, thetadot, vdot)
+        state_dot = ca.vertcat(rdot, eydot, ephidot, vdot)
 
         # Function to integrate dynamics over each interval
         integrate_f = ca.Function('integrate_f', [states, controls], [state_dot])
@@ -51,7 +61,6 @@ class MPC:
         cost = 0
         # Setup cost function and constraints
         for k in range(self.horizon):
-            # Cost function (minimize distance to reference point + velocity tracking)
             cost = cost + (self.X[0, k] - self.X_ref[0]) ** 2 + \
                     (self.X[1, k] - self.X_ref[1]) ** 2 + \
                     (self.X[3, k] - self.X_ref[2]) ** 2
@@ -62,13 +71,15 @@ class MPC:
             
             # Control bounds
             self.opti.subject_to(self.U[0, k] > self.a_bound[0])  
-            self.opti.subject_to(self.U[0, k] < self.a_bound[1])   
-            self.opti.subject_to(self.U[1, k] > self.delta_bound[0])
-            self.opti.subject_to(self.U[1, k] < self.delta_bound[1])
+            self.opti.subject_to(self.U[0, k] < self.a_bound[1])  
+            self.opti.subject_to(self.U[1, k] > self.deltaphi_bound[0])  
+            self.opti.subject_to(self.U[1, k] < self.deltaphi_bound[1])  
             
-            # State bounds (velocity bounds)
-            self.opti.subject_to(self.X[3, k] > self.v_bound[0])  # velocity lower bound
-            self.opti.subject_to(self.X[3, k] < self.v_bound[1])  # velocity upper bound
+            # State bounds 
+            self.opti.subject_to(self.X[2, k + 1] > self.ephi_bound[0])  
+            self.opti.subject_to(self.X[2, k + 1] < self.ephi_bound[1])  
+            self.opti.subject_to(self.X[3, k + 1] > self.v_bound[0]) 
+            self.opti.subject_to(self.X[3, k + 1] < self.v_bound[1]) 
             
         # Boundary conditions
         self.opti.subject_to(self.X[:, 0] == self.X_0)  # initial condition

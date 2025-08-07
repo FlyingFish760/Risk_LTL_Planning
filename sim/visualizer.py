@@ -39,22 +39,169 @@ class Visualizer:
         line_x = np.zeros(len(line_y))
         self.ax.plot(line_x, line_y, '-.', color='black')
 
-    def plot_grid(self, region_size, region_res, label_func, traffic_light=None):
-        grid_x = np.arange(0, region_size[0]+1, region_res[0])
-        grid_y = np.arange(0, region_size[1]+1, region_res[1])
-        for x in grid_x:
-            self.ax.plot([x, x], [0, region_size[1]], color='black')
-        for y in grid_y:
-            self.ax.plot([0, region_size[0]], [y, y], color='black')
+    # def plot_grid(self, region_size, region_res, label_func, traffic_light=None):
+    #     grid_x = np.arange(0, region_size[0]+1, region_res[0])
+    #     grid_y = np.arange(0, region_size[1]+1, region_res[1])
+    #     for x in grid_x:
+    #         self.ax.plot([x, x], [0, region_size[1]], color='black')
+    #     for y in grid_y:
+    #         self.ax.plot([0, region_size[0]], [y, y], color='black')
 
-        for region, label in label_func.items():
-            xbl, xbu, ybl, ybu, _, _ = region
+    #     for region, label in label_func.items():
+    #         xbl, xbu, ybl, ybu, _, _ = region
             
                 
-            xbl = max(0, xbl)
-            xbu = min(region_size[0], xbu)
-            ybl = max(0, ybl)
-            ybu = min(region_size[1], ybu)
+    #         xbl = max(0, xbl)
+    #         xbu = min(region_size[0], xbu)
+    #         ybl = max(0, ybl)
+    #         ybu = min(region_size[1], ybu)
+    #         if label == 'c':
+    #             c = 'green' if traffic_light == 0 else 'red'
+    #             a = 0.1
+    #         elif label == 'v1':
+    #             c = 'yellow'
+    #             a = 0.2
+    #         elif label == 'v0':
+    #             c = 'yellow'
+    #             a = 1
+    #         elif label == 'o':
+    #             c = 'grey'
+    #             a = 1
+    #         elif label == 't':
+    #             c = 'blue'
+    #             a = 1
+    #         self.ax.set_xlim(0, region_size[0])
+    #         self.ax.set_ylim(0, region_size[1])
+    #         rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c, alpha=a)
+    #         self.ax.add_patch(rect)
+
+
+    def plot_obstacle(self, square_obs_list):
+        for obs in square_obs_list:
+            rect = plt.Rectangle((obs[0], obs[1]), obs[2], obs[3], color='red')
+            self.ax.add_patch(rect)
+
+    def plot_perception(self, pos, range):
+        rect = plt.Rectangle((pos[0] - range[0]/2, pos[1]), range[0], range[1], color='grey', alpha=0.5)
+        self.ax.add_patch(rect)
+
+
+    # def plot_car(self, x, y, yaw, steer, color='black'):
+    #     C = Car_Para()
+    #     car = np.array([[-C.RB, -C.RB, C.RF, C.RF, -C.RB],
+    #                     [C.W / 2, -C.W / 2, -C.W / 2, C.W / 2, C.W / 2]])
+
+    #     wheel = np.array([[-C.TR, -C.TR, C.TR, C.TR, -C.TR],
+    #                       [C.TW / 4, -C.TW / 4, -C.TW / 4, C.TW / 4, C.TW / 4]])
+
+    #     rlWheel = wheel.copy()
+    #     rrWheel = wheel.copy()
+    #     frWheel = wheel.copy()
+    #     flWheel = wheel.copy()
+
+    #     Rot1 = np.array([[math.cos(yaw), -math.sin(yaw)],
+    #                      [math.sin(yaw), math.cos(yaw)]])
+
+    #     Rot2 = np.array([[math.cos(steer), math.sin(steer)],
+    #                      [-math.sin(steer), math.cos(steer)]])
+
+    #     frWheel = np.dot(Rot2, frWheel)
+    #     flWheel = np.dot(Rot2, flWheel)
+
+    #     frWheel += np.array([[C.WB], [-C.WD / 2]])
+    #     flWheel += np.array([[C.WB], [C.WD / 2]])
+    #     rrWheel[1, :] -= C.WD / 2
+    #     rlWheel[1, :] += C.WD / 2
+
+    #     frWheel = np.dot(Rot1, frWheel)
+    #     flWheel = np.dot(Rot1, flWheel)
+
+    #     rrWheel = np.dot(Rot1, rrWheel)
+    #     rlWheel = np.dot(Rot1, rlWheel)
+    #     car = np.dot(Rot1, car)
+
+    #     frWheel += np.array([[x], [y]])
+    #     flWheel += np.array([[x], [y]])
+    #     rrWheel += np.array([[x], [y]])
+    #     rlWheel += np.array([[x], [y]])
+    #     car += np.array([[x], [y]])
+
+    #     def arrow(x, y, theta, L, c):
+    #         angle = np.deg2rad(30)
+    #         d = 0.3 * L
+    #         w = 2
+
+    #         x_start = x
+    #         y_start = y
+    #         x_end = x + L * np.cos(theta)
+    #         y_end = y + L * np.sin(theta)
+
+    #         theta_hat_L = theta + PI - angle
+    #         theta_hat_R = theta + PI + angle
+
+    #         x_hat_start = x_end
+    #         x_hat_end_L = x_hat_start + d * np.cos(theta_hat_L)
+    #         x_hat_end_R = x_hat_start + d * np.cos(theta_hat_R)
+
+    #         y_hat_start = y_end
+    #         y_hat_end_L = y_hat_start + d * np.sin(theta_hat_L)
+    #         y_hat_end_R = y_hat_start + d * np.sin(theta_hat_R)
+
+    #         self.ax.plot([x_start, x_end], [y_start, y_end], color=c, linewidth=w)
+    #         self.ax.plot([x_hat_start, x_hat_end_L],
+    #                 [y_hat_start, y_hat_end_L], color=c, linewidth=w)
+    #         self.ax.plot([x_hat_start, x_hat_end_R],
+    #                 [y_hat_start, y_hat_end_R], color=c, linewidth=w)
+
+    #     self.ax.plot(car[0, :], car[1, :], color)
+    #     self.ax.plot(frWheel[0, :], frWheel[1, :], color)
+    #     self.ax.plot(rrWheel[0, :], rrWheel[1, :], color)
+    #     self.ax.plot(flWheel[0, :], flWheel[1, :], color)
+    #     self.ax.plot(rlWheel[0, :], rlWheel[1, :], color)
+    #     arrow(x, y, yaw, C.WB * 0.8, color)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def plot_grid(self, region_size, region_res, label_func, traffic_light=None):
+        """
+        Draw grid in Frenet frame with (r, ey) axes.
+        region_size: [r_max, ey_max]
+        region_res: [Δr, Δey]
+        label_func: {(r_bl, r_bu, ey_bl, ey_bu, v_bl, v_bu): label}
+        """
+        # Calculate grid ranges for Frenet frame
+        grid_r = np.arange(0, region_size[0]+region_res[0], region_res[0])
+        grid_ey = np.arange(-region_size[1]/2, region_size[1]/2+region_res[1], region_res[1])
+        
+        # Draw vertical grid lines (constant r)
+        for r in grid_r:
+            self.ax.plot([r, r], [-region_size[1]/2, region_size[1]/2], color='black')
+        
+        # Draw horizontal grid lines (constant ey)
+        for ey in grid_ey:
+            self.ax.plot([0, region_size[0]], [ey, ey], color='black')
+
+        # Plot labeled regions
+        for region, label in label_func.items():
+            r_bl, r_bu, ey_bl, ey_bu, _, _ = region
+            
+            # Clamp to region bounds
+            r_bl = max(0, r_bl)
+            r_bu = min(region_size[0], r_bu)
+            ey_bl = max(-region_size[1]/2, ey_bl)
+            ey_bu = min(region_size[1]/2, ey_bu)
+            
             if label == 'c':
                 c = 'green' if traffic_light == 0 else 'red'
                 a = 0.1
@@ -70,29 +217,25 @@ class Visualizer:
             elif label == 't':
                 c = 'blue'
                 a = 1
+            
+            # Set axis limits exactly to region bounds
             self.ax.set_xlim(0, region_size[0])
-            self.ax.set_ylim(0, region_size[1])
-            rect = plt.Rectangle((xbl, ybl), xbu-xbl, ybu-ybl, color=c, alpha=a)
+            self.ax.set_ylim(-region_size[1]/2, region_size[1]/2)
+            
+            rect = plt.Rectangle((r_bl, ey_bl), r_bu-r_bl, ey_bu-ey_bl, color=c, alpha=a)
             self.ax.add_patch(rect)
 
 
-    def plot_obstacle(self, square_obs_list):
-        for obs in square_obs_list:
-            rect = plt.Rectangle((obs[0], obs[1]), obs[2], obs[3], color='red')
-            self.ax.add_patch(rect)
-
-    def plot_perception(self, pos, range):
-        rect = plt.Rectangle((pos[0] - range[0]/2, pos[1]), range[0], range[1], color='grey', alpha=0.5)
-        self.ax.add_patch(rect)
-
-
-    def plot_car(self, x, y, yaw, steer, color='black'):
+    def plot_car(self, r, ey, yaw, steer, color='black'):
+        """
+        Plot vehicle in Frenet frame. Position is (r, ey).
+        """
         C = Car_Para()
         car = np.array([[-C.RB, -C.RB, C.RF, C.RF, -C.RB],
                         [C.W / 2, -C.W / 2, -C.W / 2, C.W / 2, C.W / 2]])
 
         wheel = np.array([[-C.TR, -C.TR, C.TR, C.TR, -C.TR],
-                          [C.TW / 4, -C.TW / 4, -C.TW / 4, C.TW / 4, C.TW / 4]])
+                        [C.TW / 4, -C.TW / 4, -C.TW / 4, C.TW / 4, C.TW / 4]])
 
         rlWheel = wheel.copy()
         rrWheel = wheel.copy()
@@ -100,10 +243,9 @@ class Visualizer:
         flWheel = wheel.copy()
 
         Rot1 = np.array([[math.cos(yaw), -math.sin(yaw)],
-                         [math.sin(yaw), math.cos(yaw)]])
-
+                        [math.sin(yaw), math.cos(yaw)]])
         Rot2 = np.array([[math.cos(steer), math.sin(steer)],
-                         [-math.sin(steer), math.cos(steer)]])
+                        [-math.sin(steer), math.cos(steer)]])
 
         frWheel = np.dot(Rot2, frWheel)
         flWheel = np.dot(Rot2, flWheel)
@@ -115,16 +257,15 @@ class Visualizer:
 
         frWheel = np.dot(Rot1, frWheel)
         flWheel = np.dot(Rot1, flWheel)
-
         rrWheel = np.dot(Rot1, rrWheel)
         rlWheel = np.dot(Rot1, rlWheel)
         car = np.dot(Rot1, car)
 
-        frWheel += np.array([[x], [y]])
-        flWheel += np.array([[x], [y]])
-        rrWheel += np.array([[x], [y]])
-        rlWheel += np.array([[x], [y]])
-        car += np.array([[x], [y]])
+        frWheel += np.array([[r], [ey]])
+        flWheel += np.array([[r], [ey]])
+        rrWheel += np.array([[r], [ey]])
+        rlWheel += np.array([[r], [ey]])
+        car += np.array([[r], [ey]])
 
         def arrow(x, y, theta, L, c):
             angle = np.deg2rad(30)
@@ -148,37 +289,69 @@ class Visualizer:
             y_hat_end_R = y_hat_start + d * np.sin(theta_hat_R)
 
             self.ax.plot([x_start, x_end], [y_start, y_end], color=c, linewidth=w)
-            self.ax.plot([x_hat_start, x_hat_end_L],
-                    [y_hat_start, y_hat_end_L], color=c, linewidth=w)
-            self.ax.plot([x_hat_start, x_hat_end_R],
-                    [y_hat_start, y_hat_end_R], color=c, linewidth=w)
+            self.ax.plot([x_hat_start, x_hat_end_L], [y_hat_start, y_hat_end_L], color=c, linewidth=w)
+            self.ax.plot([x_hat_start, x_hat_end_R], [y_hat_start, y_hat_end_R], color=c, linewidth=w)
 
         self.ax.plot(car[0, :], car[1, :], color)
         self.ax.plot(frWheel[0, :], frWheel[1, :], color)
         self.ax.plot(rrWheel[0, :], rrWheel[1, :], color)
         self.ax.plot(flWheel[0, :], flWheel[1, :], color)
         self.ax.plot(rlWheel[0, :], rlWheel[1, :], color)
-        arrow(x, y, yaw, C.WB * 0.8, color)
+        arrow(r, ey, yaw, C.WB * 0.8, color)
+
+
 
 
 
 
 if __name__ == '__main__':
-    road_size = [12, 80]
-    square_obs = [-6, 30, 6, 10]
+    # road_size = [12, 80]
+    # square_obs = [-6, 30, 6, 10]
 
-    fig = plt.figure()
-    ax_1 = fig.add_subplot(1, 2, 1)
+    # fig = plt.figure()
+    # ax_1 = fig.add_subplot(1, 2, 1)
+    # plt.axis('off')
+    # plt.axis('equal')
+    # ax_2 = fig.add_subplot(1, 2, 2)
+    # vis = Visualizer(ax_1, road_size, square_obs)
+
+    # car_pos = (-3, 10)
+
+    # plt.gca().set_aspect(1)
+    # vis.plot_boundary_lines()
+    # vis.plot_obstacle()
+    # vis.plot_perception((car_pos[0] - 15, car_pos[1]), (30,30))
+    # vis.plot_car(car_pos[0], car_pos[1], PI/2, 0)
+    # plt.show()
+
+    # --- Setup ---
+    region_size = [60, 7.5]         # [r_max, ey_max] in meters (Frenet)
+    region_res = [5, 1.5]         # grid resolution along r and ey
+
+    # Label map in (r_low, r_high, ey_low, ey_high, v_low, v_high)
+    label_func = {
+        (10, 20, 0, 1.5, 0, 30): "o",  # Overspeed region
+        (50, 60, -1.5, 1.5, 0, 30): "t"  # Target region
+    }
+
+    # Vehicle state in Frenet frame: r, ey, yaw, steer
+    r = 30
+    ey = 1.5
+    yaw = 0     # Assume aligned with road
+    steer = 0   # Straight wheel
+
+    # --- Plotting ---
+    fig, ax = plt.subplots(figsize=(10, 6))
     plt.axis('off')
     plt.axis('equal')
-    ax_2 = fig.add_subplot(1, 2, 2)
-    vis = Visualizer(ax_1, road_size, square_obs)
+    vis = Visualizer(ax)
 
-    car_pos = (-3, 10)
+    vis.plot_grid(region_size, region_res, label_func)
+    vis.plot_car(r, ey, yaw, steer, color='black')
 
-    plt.gca().set_aspect(1)
-    vis.plot_boundary_lines()
-    vis.plot_obstacle()
-    vis.plot_perception((car_pos[0] - 15, car_pos[1]), (30,30))
-    vis.plot_car(car_pos[0], car_pos[1], PI/2, 0)
+    ax.set_title("Frenet Frame Visualization (r, $e_y$)")
+    # ax.set_xlabel("Longitudinal Position r [m]")
+    # ax.set_ylabel("Lateral Deviation $e_y$ [m]")
+    plt.grid(True)
+    plt.axis("equal")
     plt.show()

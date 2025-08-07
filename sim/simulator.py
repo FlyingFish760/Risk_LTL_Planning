@@ -15,20 +15,28 @@ def f_dyn(q, u, params):
 
 def car_dyn(state, input, param):
     """
-    state: [x, y, theta, v]
-    input: [a, angel_vec]
+    state: [r, ey, ephi, v]
+    input: [a, deltaphi]
     """
-    p_x, p_y, yaw, velocity = state
-    acceleration, angel_vec = input
+    r, ey, ephi, v = state
+    a, deltaphi = input
     
-    # Update velocity using acceleration
-    new_velocity = velocity + acceleration * param['dt']
+    # Road curvature (assume straight road for now)
+    kappa = 0  # can be parameterized later for curved roads
+    dt = param['dt']
+    WB = param['WB']  # wheelbase (l_f + l_r)
     
-    # Update position and orientation using current velocity
-    new_state = [p_x + np.cos(yaw) * velocity * param['dt'],
-                 p_y + np.sin(yaw) * velocity * param['dt'],
-                 yaw + velocity * np.tan(angel_vec) * param['dt'] / param['WB'],
-                 new_velocity]
+    rdot = v * np.cos(ephi) / (1 - ey * kappa)
+    eydot = v * np.sin(ephi)
+    ephidot = v * (np.tan(deltaphi) / WB - kappa * np.cos(ephi) / (1 - kappa * ey))
+    vdot = a
+    
+    # Integrate to get new state
+    new_state = [r + rdot * dt,
+                 ey + eydot * dt,
+                 ephi + ephidot * dt,
+                 v + vdot * dt]
+    
     return new_state
 
 

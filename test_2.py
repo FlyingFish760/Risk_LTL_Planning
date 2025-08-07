@@ -44,109 +44,36 @@ def cal_target_ref(target_abs_state, region_res, speed_res):
     target_ref_2 = target_abs_state[2] * speed_res + speed_res / 2
     return np.array([target_ref_0, target_ref_1, target_ref_2])
 
-# def check_P_matrix_bounds(P_matrix, abs_model, prod_auto):
-#     """Check if P_matrix allows transitions to invalid states"""
-#     print("=== Checking Product Automaton P_matrix for out-of-bounds transitions ===")
-    
-#     # Get state space bounds for the original MDP part
-#     state_bounds = {
-#         'x_max': abs_model.map_range[0] // abs_model.map_res[0] - 1,
-#         'y_max': abs_model.map_range[1] // abs_model.map_res[1] - 1, 
-#         'v_max': abs_model.speed_range // abs_model.speed_res - 1
-#     }
-#     print(f"MDP State bounds: x=[0,{state_bounds['x_max']}], y=[0,{state_bounds['y_max']}], v=[0,{state_bounds['v_max']}]")
-    
-#     num_prod_states = len(prod_auto.prod_state_set)
-#     num_actions = len(prod_auto.prod_action_set)
-    
-#     print(f"Product automaton has {num_prod_states} states and {num_actions} actions")
-    
-#     invalid_transitions = []
-    
-#     for prod_state_idx in range(num_prod_states):
-#         # Product state is (mdp_state_idx, dfa1_state, dfa2_state)
-#         prod_state = prod_auto.prod_state_set[prod_state_idx]
-#         mdp_state_idx, dfa1_state, dfa2_state = prod_state
+def action_to_state_transition(action):
+    '''
+    action: (m, s). m is the movement action, s is the speeding action. 
+    m in {'l', 'r', 'f'}, s in {'a', 'd', 'c'}.
+
+    return: delta_state = (delta_r, delta_ey, delta_v)
+    '''
+    delta_state = np.array([0, 0, 0])
+
+    # movement action
+    delta_state[0] = 1
+    if action[0] == 'l':
+        delta_state[1] = 1
+    elif action[0] == 'r':
+        delta_state[1] = -1
+    elif action[0] == 'f':
+        delta_state[1] = 0
+
+    # speeding action
+    if action[1] == 'a':
+        delta_state[2] = 1
+    elif action[1] == 'd':
+        delta_state[2] = -1
+    elif action[1] == 'c':
+        delta_state[2] = 0
+
+    return delta_state
         
-#         # Get the actual MDP state (x, y, v coordinates)
-#         current_mdp_state = abs_model.state_set[mdp_state_idx]
-        
-#         for action_idx in range(num_actions):
-#             action = abs_model.action_set[action_idx]  # This should be the MDP action
-            
-#             # Get transition probabilities for this product state-action pair
-#             trans_probs = P_matrix[prod_state_idx, action_idx, :]
-            
-#             # Check each possible next product state
-#             for next_prod_state_idx in range(num_prod_states):
-#                 if trans_probs[next_prod_state_idx] > 0:  # Non-zero transition probability
-#                     next_prod_state = prod_auto.prod_state_set[next_prod_state_idx]
-#                     next_mdp_state_idx, next_dfa1_state, next_dfa2_state = next_prod_state
-                    
-#                     # Get the actual next MDP state coordinates
-#                     next_mdp_state = abs_model.state_set[next_mdp_state_idx]
-                    
-#                     # Check if next MDP state is within bounds
-#                     if (next_mdp_state[0] < 0 or next_mdp_state[0] > state_bounds['x_max'] or
-#                         next_mdp_state[1] < 0 or next_mdp_state[1] > state_bounds['y_max'] or
-#                         next_mdp_state[2] < 0 or next_mdp_state[2] > state_bounds['v_max']):
-                        
-#                         invalid_transitions.append({
-#                             'from_prod_state': prod_state,
-#                             'from_mdp_state': current_mdp_state,
-#                             'action': action,
-#                             'to_prod_state': next_prod_state,
-#                             'to_mdp_state': next_mdp_state,
-#                             'probability': trans_probs[next_prod_state_idx],
-#                             'prod_state_idx': prod_state_idx,
-#                             'action_idx': action_idx,
-#                             'next_prod_state_idx': next_prod_state_idx
-#                         })
-    
-#     if invalid_transitions:
-#         print(f"FOUND {len(invalid_transitions)} INVALID TRANSITIONS IN PRODUCT AUTOMATON!")
-#         for i, trans in enumerate(invalid_transitions[:5]):  # Show first 5
-#             print(f"  {i+1}: MDP State {trans['from_mdp_state']} --{trans['action']}--> MDP State {trans['to_mdp_state']} (prob={trans['probability']:.4f})")
-#             print(f"      Product: {trans['from_prod_state']} --> {trans['to_prod_state']}")
-#         if len(invalid_transitions) > 5:
-#             print(f"  ... and {len(invalid_transitions) - 5} more")
-#     else:
-#         print("No invalid MDP transitions found in Product Automaton P_matrix")
-    
-#     # Also check if there are MDP states that can lead to out-of-bounds via simple addition
-#     print("\n=== Checking MDP state+action combinations that would be out-of-bounds ===")
-#     problematic_combinations = []
-    
-#     for mdp_state_idx in range(len(abs_model.state_set)):
-#         current_mdp_state = abs_model.state_set[mdp_state_idx]
-        
-#         for action_idx in range(len(abs_model.action_set)):
-#             action = abs_model.action_set[action_idx]
-#             target_state = current_mdp_state + action
-            
-#             if (target_state[0] < 0 or target_state[0] > state_bounds['x_max'] or
-#                 target_state[1] < 0 or target_state[1] > state_bounds['y_max'] or
-#                 target_state[2] < 0 or target_state[2] > state_bounds['v_max']):
-                
-#                 problematic_combinations.append({
-#                     'mdp_state': current_mdp_state,
-#                     'action': action, 
-#                     'target': target_state,
-#                     'mdp_state_idx': mdp_state_idx,
-#                     'action_idx': action_idx
-#                 })
-    
-#     if problematic_combinations:
-#         print(f"FOUND {len(problematic_combinations)} MDP STATE+ACTION COMBINATIONS THAT LEAD OUT-OF-BOUNDS!")
-#         for i, combo in enumerate(problematic_combinations[:10]):  # Show first 10
-#             print(f"  {i+1}: MDP State {combo['mdp_state']} + Action {combo['action']} = {combo['target']} (OUT OF BOUNDS)")
-#         if len(problematic_combinations) > 10:
-#             print(f"  ... and {len(problematic_combinations) - 10} more")
-#     else:
-#         print("No problematic MDP state+action combinations found")
-    
-#     print("=== End Product Automaton P_matrix bounds check ===\n")
-#     return invalid_transitions, problematic_combinations
+
+
 
 
 
@@ -161,9 +88,9 @@ def main():
     # mdp_env = MDP(state_set, action_set, transitions, ["e"], initial_state)
 
     # ---------- MPD System (Abstraction) --------------------
-    region_size = (50, 10)
-    region_res = (5, 2)   # Now region_size[1]/region_res[1] must be odd
-    max_speed = 80
+    region_size = (50, 20)
+    region_res = (10,4)   # Now region_size[1]/region_res[1] must be odd
+    max_speed = 20
     speed_res = 10
 
     # static_label = {(15, 20, 15, 20): "t"}  
@@ -174,8 +101,8 @@ def main():
     #                (0, 20, 0, 20, 0, SPEED_LOW_BOUND): "s"}    # "s" for "slow"
     # label_func = {(15, 20, 5, 10, 0, max_speed): "t",
     #                (5, 20, 5, 10, speed_limit, max_speed): "o"}   # "o" for "overspeed"
-    label_func = {(45, 50, 8, 10, 0, max_speed): "t",
-                   (20, 25, 8, 10, 0, max_speed): "o"}   # "o" for "obstacle"
+    label_func = {(40, 50, 6, 10, 0, max_speed): "t",
+                   (20, 30, 6, 10, 0, max_speed): "o"}   # "o" for "obstacle"
     
     ego_state = np.array([0, 0, np.pi / 2, 0])
 
@@ -363,11 +290,12 @@ def main():
             optimal_policy, Z = LP_prob.extract(occ_measure)
             decision_index = optimal_policy[prod_state_index]
             sys_decision = abs_model.action_set[int(decision_index)]
-            target_abs_state_sys = abs_state_sys + sys_decision
             print("abs_state_sys:", abs_state_sys)
             print("decision:", sys_decision)
-
-
+            delta_state = action_to_state_transition(sys_decision)
+            print("delta_state:", delta_state)
+            target_abs_state_sys = abs_state_sys + delta_state
+            
         target_ref = cal_target_ref(target_abs_state_sys, region_res, speed_res) 
         print("target_ref:", target_ref)
         control_input = mpc_con.solve(ego_state, target_ref)
@@ -393,5 +321,137 @@ def main():
 
         print("------------new iter-------------")
 
+
+
+
+
+
+
+
+
+
+# def check_P_matrix_bounds(P_matrix, abs_model, prod_auto):
+#     """Check if P_matrix allows transitions to invalid states"""
+#     print("=== Checking Product Automaton P_matrix for out-of-bounds transitions ===")
+    
+#     # Get state space bounds for the original MDP part
+#     state_bounds = {
+#         'x_max': abs_model.map_range[0] // abs_model.map_res[0] - 1,
+#         'y_max': abs_model.map_range[1] // abs_model.map_res[1] - 1, 
+#         'v_max': abs_model.speed_range // abs_model.speed_res - 1
+#     }
+#     print(f"MDP State bounds: x=[0,{state_bounds['x_max']}], y=[0,{state_bounds['y_max']}], v=[0,{state_bounds['v_max']}]")
+    
+#     num_prod_states = len(prod_auto.prod_state_set)
+#     num_actions = len(prod_auto.prod_action_set)
+    
+#     print(f"Product automaton has {num_prod_states} states and {num_actions} actions")
+    
+#     invalid_transitions = []
+    
+#     for prod_state_idx in range(num_prod_states):
+#         # Product state is (mdp_state_idx, dfa1_state, dfa2_state)
+#         prod_state = prod_auto.prod_state_set[prod_state_idx]
+#         mdp_state_idx, dfa1_state, dfa2_state = prod_state
+        
+#         # Get the actual MDP state (x, y, v coordinates)
+#         current_mdp_state = abs_model.state_set[mdp_state_idx]
+        
+#         for action_idx in range(num_actions):
+#             action = abs_model.action_set[action_idx]  # This should be the MDP action
+            
+#             # Get transition probabilities for this product state-action pair
+#             trans_probs = P_matrix[prod_state_idx, action_idx, :]
+            
+#             # Check each possible next product state
+#             for next_prod_state_idx in range(num_prod_states):
+#                 if trans_probs[next_prod_state_idx] > 0:  # Non-zero transition probability
+#                     next_prod_state = prod_auto.prod_state_set[next_prod_state_idx]
+#                     next_mdp_state_idx, next_dfa1_state, next_dfa2_state = next_prod_state
+                    
+#                     # Get the actual next MDP state coordinates
+#                     next_mdp_state = abs_model.state_set[next_mdp_state_idx]
+                    
+#                     # Check if next MDP state is within bounds
+#                     if (next_mdp_state[0] < 0 or next_mdp_state[0] > state_bounds['x_max'] or
+#                         next_mdp_state[1] < 0 or next_mdp_state[1] > state_bounds['y_max'] or
+#                         next_mdp_state[2] < 0 or next_mdp_state[2] > state_bounds['v_max']):
+                        
+#                         invalid_transitions.append({
+#                             'from_prod_state': prod_state,
+#                             'from_mdp_state': current_mdp_state,
+#                             'action': action,
+#                             'to_prod_state': next_prod_state,
+#                             'to_mdp_state': next_mdp_state,
+#                             'probability': trans_probs[next_prod_state_idx],
+#                             'prod_state_idx': prod_state_idx,
+#                             'action_idx': action_idx,
+#                             'next_prod_state_idx': next_prod_state_idx
+#                         })
+    
+#     if invalid_transitions:
+#         print(f"FOUND {len(invalid_transitions)} INVALID TRANSITIONS IN PRODUCT AUTOMATON!")
+#         for i, trans in enumerate(invalid_transitions[:5]):  # Show first 5
+#             print(f"  {i+1}: MDP State {trans['from_mdp_state']} --{trans['action']}--> MDP State {trans['to_mdp_state']} (prob={trans['probability']:.4f})")
+#             print(f"      Product: {trans['from_prod_state']} --> {trans['to_prod_state']}")
+#         if len(invalid_transitions) > 5:
+#             print(f"  ... and {len(invalid_transitions) - 5} more")
+#     else:
+#         print("No invalid MDP transitions found in Product Automaton P_matrix")
+    
+#     # Also check if there are MDP states that can lead to out-of-bounds via simple addition
+#     print("\n=== Checking MDP state+action combinations that would be out-of-bounds ===")
+#     problematic_combinations = []
+    
+#     for mdp_state_idx in range(len(abs_model.state_set)):
+#         current_mdp_state = abs_model.state_set[mdp_state_idx]
+        
+#         for action_idx in range(len(abs_model.action_set)):
+#             action = abs_model.action_set[action_idx]
+#             target_state = current_mdp_state + action
+            
+#             if (target_state[0] < 0 or target_state[0] > state_bounds['x_max'] or
+#                 target_state[1] < 0 or target_state[1] > state_bounds['y_max'] or
+#                 target_state[2] < 0 or target_state[2] > state_bounds['v_max']):
+                
+#                 problematic_combinations.append({
+#                     'mdp_state': current_mdp_state,
+#                     'action': action, 
+#                     'target': target_state,
+#                     'mdp_state_idx': mdp_state_idx,
+#                     'action_idx': action_idx
+#                 })
+    
+#     if problematic_combinations:
+#         print(f"FOUND {len(problematic_combinations)} MDP STATE+ACTION COMBINATIONS THAT LEAD OUT-OF-BOUNDS!")
+#         for i, combo in enumerate(problematic_combinations[:10]):  # Show first 10
+#             print(f"  {i+1}: MDP State {combo['mdp_state']} + Action {combo['action']} = {combo['target']} (OUT OF BOUNDS)")
+#         if len(problematic_combinations) > 10:
+#             print(f"  ... and {len(problematic_combinations) - 10} more")
+#     else:
+#         print("No problematic MDP state+action combinations found")
+    
+#     print("=== End Product Automaton P_matrix bounds check ===\n")
+#     return invalid_transitions, problematic_combinations
+
+
+
+
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
     main()
+    # sys_decision = ['l', 'd']
+    # abs_state_sys = [0, 0, 0]
+    # delta_state = action_to_state_transition(sys_decision)
+    # target_abs_state_sys = abs_state_sys + delta_state
+    # print("target_abs_state_sys:", target_abs_state_sys)
+    # target_ref = cal_target_ref(target_abs_state_sys, (10, 4), 10) 
+    # print("target_ref:", target_ref)
