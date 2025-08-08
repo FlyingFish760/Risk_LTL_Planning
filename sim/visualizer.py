@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 PI = np.pi
 
@@ -28,7 +29,24 @@ class Visualizer:
 
     def __init__(self, ax):
         self.ax = ax
-
+        # Velocity parameters for labeling
+        # self.max_speed = 20
+        self.speed_res = 10
+        
+    def set_velocity_params(self, speed_res):
+        """Set velocity discretization parameters for velocity state labeling"""
+        # self.max_speed = max_speed
+        self.speed_res = speed_res
+    
+    # def get_velocity_range(self, velocity_state):
+    #     """
+    #     Get the continuous velocity range for a given discrete velocity state.
+    #     Returns tuple (v_min, v_max) in actual velocity units.
+    #     """
+    #     v_min = velocity_state * self.speed_res
+    #     v_max = (velocity_state + 1) * self.speed_res
+    #     return (v_min, v_max)
+    
     def plot_road(self, road_size):
 
         line_y = [n for n in range(road_size[1]+1)]
@@ -217,6 +235,9 @@ class Visualizer:
             elif label == 't':
                 c = 'blue'
                 a = 1
+            elif label == 's':
+                c = 'red'
+                a = 1
             
             # Set axis limits exactly to region bounds
             self.ax.set_xlim(0, region_size[0])
@@ -226,10 +247,11 @@ class Visualizer:
             self.ax.add_patch(rect)
 
 
-    def plot_car(self, r, ey, yaw, steer, color='black'):
+    def plot_car(self, state, steer, color='black'):
         """
         Plot vehicle in Frenet frame. Position is (r, ey).
         """
+        r, ey, yaw, v = state
         C = Car_Para()
         car = np.array([[-C.RB, -C.RB, C.RF, C.RF, -C.RB],
                         [C.W / 2, -C.W / 2, -C.W / 2, C.W / 2, C.W / 2]])
@@ -298,7 +320,16 @@ class Visualizer:
         self.ax.plot(flWheel[0, :], flWheel[1, :], color)
         self.ax.plot(rlWheel[0, :], rlWheel[1, :], color)
         arrow(r, ey, yaw, C.WB * 0.8, color)
-
+        
+        # Add velocity state label 
+        velocity_state = int(v // self.speed_res)
+        label_text = f"v{velocity_state}"
+        # Position label above the car
+        label_r = r
+        label_ey = ey + C.W * 0.8  # Position above the car
+        self.ax.text(label_r, label_ey, label_text, 
+                    ha='center', va='bottom', fontsize=10, fontweight='bold',
+                    bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.8))
 
 
 
@@ -327,6 +358,8 @@ if __name__ == '__main__':
     # --- Setup ---
     region_size = [60, 7.5]         # [r_max, ey_max] in meters (Frenet)
     region_res = [5, 1.5]         # grid resolution along r and ey
+    max_speed = 20
+    speed_res = 10
 
     # Label map in (r_low, r_high, ey_low, ey_high, v_low, v_high)
     label_func = {
@@ -334,20 +367,35 @@ if __name__ == '__main__':
         (50, 60, -1.5, 1.5, 0, 30): "t"  # Target region
     }
 
-    # Vehicle state in Frenet frame: r, ey, yaw, steer
-    r = 30
-    ey = 1.5
-    yaw = 0     # Assume aligned with road
-    steer = 0   # Straight wheel
+    # # Vehicle state in Frenet frame: r, ey, yaw, steer
+    # r = 30
+    # ey = 1.5
+    # yaw = 0     # Assume aligned with road
+    # steer = 0   # Straight wheel
+    
+    # Test cars with different velocity states
+    test_cars = [
+        {'state': [15, 0.5, 0, 0], 'steer': 0},        # v0 (0-10 m/s)
+        {'state': [30, -1.0, np.pi/6, 5], 'steer': 0.5}, # v1 (10-20 m/s)
+        {'state': [45, 1.0, -np.pi/6, 10], 'steer': -0.5}, # v2 (20-30 m/s)
+    ]
 
     # --- Plotting ---
     fig, ax = plt.subplots(figsize=(10, 6))
     plt.axis('off')
     plt.axis('equal')
     vis = Visualizer(ax)
+    
+    # Set velocity parameters
+    vis.set_velocity_params(speed_res)
 
+    # Plot grid and regions
     vis.plot_grid(region_size, region_res, label_func)
-    vis.plot_car(r, ey, yaw, steer, color='black')
+    # vis.plot_car(r, ey, yaw, steer, color='black')
+    
+    # Plot cars with velocity state labels
+    for car in test_cars:
+        vis.plot_car(car['state'], car['steer'])
 
     ax.set_title("Frenet Frame Visualization (r, $e_y$)")
     # ax.set_xlabel("Longitudinal Position r [m]")

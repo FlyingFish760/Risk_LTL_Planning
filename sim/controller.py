@@ -9,10 +9,10 @@ class MPC:
         self.x_dim = 4
         self.u_dim = 2
 
-        self.v_bound = [0, 10]
+        self.v_bound = [0, 8]
         self.ephi_bound = [-np.pi / 2, np.pi / 2]
         
-        self.a_bound = [-5, 5]
+        self.a_bound = [-1, 1]
         self.deltaphi_bound = [-1, 1]  
 
         self.dt = car_para['dt']
@@ -70,8 +70,8 @@ class MPC:
             self.opti.subject_to(self.X[:, k + 1] == st_next)
             
             # Control bounds
-            self.opti.subject_to(self.U[0, k] > self.a_bound[0])  
-            self.opti.subject_to(self.U[0, k] < self.a_bound[1])  
+            # self.opti.subject_to(self.U[0, k] > self.a_bound[0])  
+            # self.opti.subject_to(self.U[0, k] < self.a_bound[1])  
             self.opti.subject_to(self.U[1, k] > self.deltaphi_bound[0])  
             self.opti.subject_to(self.U[1, k] < self.deltaphi_bound[1])  
             

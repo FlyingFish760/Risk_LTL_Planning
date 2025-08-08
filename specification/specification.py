@@ -49,6 +49,7 @@ class LTL_Spec:
         # print(dfa.initial_state)
         # print(dfa.states)
         # print(dfa.alphabet)
+        # print(dfa.sink_states)
         return dfa
 
     def get_alphabet(self, letter):

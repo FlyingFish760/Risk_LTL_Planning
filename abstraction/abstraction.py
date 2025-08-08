@@ -85,14 +85,26 @@ class Abstraction:
         label_map = np.array(["_"]*len(self.state_set), dtype=object)
         for state_region, label in label_function.items():
             r_bl, r_bu, ey_bl, ey_bu, v_bl, v_bu = state_region
-            r_bl = r_bl // self.route_res[0]
-            r_bu = r_bu // self.route_res[0]
-            ey_bl = int((ey_bl + self.route_res[1] / 2) // self.route_res[1])
-            ey_bu = int((ey_bu + self.route_res[1] / 2) // self.route_res[1])
-            v_bl = v_bl // self.speed_res
-            v_bu = v_bu // self.speed_res
+            
+            # r discretization: (0, res) -> r_discrete=0, (res, 2*res) -> r_discrete=1, etc.
+            # So r_continuous ∈ [i*res, (i+1)*res) maps to r_discrete = i
+            r_bl_idx = int(np.floor(r_bl / self.route_res[0]))
+            r_bu_idx = int(np.ceil(r_bu / self.route_res[0]))
+            
+            # ey discretization: (-res/2, res/2) -> ey_discrete=0, (res/2, 3*res/2) -> ey_discrete=1, etc.
+            # So ey_continuous ∈ [i*res - res/2, (i+1)*res - res/2) maps to ey_discrete = i
+            # Equivalently: ey_continuous ∈ [(i-0.5)*res, (i+0.5)*res) maps to ey_discrete = i
+            ey_bl_idx = int(np.floor((ey_bl + self.route_res[1]/2) / self.route_res[1]))
+            ey_bu_idx = int(np.ceil((ey_bu + self.route_res[1]/2) / self.route_res[1]))
+            
+            # v discretization: similar to r, (0, res) -> v_discrete=0, etc.
+            v_bl_idx = int(np.floor(v_bl / self.speed_res))
+            v_bu_idx = int(np.ceil(v_bu / self.speed_res))
+            
             for n in range(len(self.state_set)):
-                if r_bl <= self.state_set[n, 0] < r_bu and ey_bl <= self.state_set[n, 1] < ey_bu and v_bl <= self.state_set[n, 2] < v_bu:
+                if (r_bl_idx <= self.state_set[n, 0] < r_bu_idx and 
+                    ey_bl_idx <= self.state_set[n, 1] < ey_bu_idx and 
+                    v_bl_idx <= self.state_set[n, 2] < v_bu_idx):
                     label_map[n] = label if label_map[n] == '_' else label_map[n] + label
         
         # def sanity_gen_labels(label_map):

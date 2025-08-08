@@ -90,19 +90,23 @@ def main():
     # ---------- MPD System (Abstraction) --------------------
     region_size = (50, 20)
     region_res = (10,4)   # Now region_size[1]/region_res[1] must be odd
-    max_speed = 20
-    speed_res = 10
+    max_speed = 10
+    speed_res = 2
 
     # static_label = {(15, 20, 15, 20): "t"}  
     # label_func = dyn_labelling(static_label, init_oppo_car_pos, [-1, 0])
-    speed_limit = 30
-    # label_func = {(15, 20, 5, 10, 0, max_speed): "t",
-    #                (5, 20, 5, 10, speed_limit, max_speed): "o",   # "o" for "overspeed"
-    #                (0, 20, 0, 20, 0, SPEED_LOW_BOUND): "s"}    # "s" for "slow"
-    # label_func = {(15, 20, 5, 10, 0, max_speed): "t",
-    #                (5, 20, 5, 10, speed_limit, max_speed): "o"}   # "o" for "overspeed"
-    label_func = {(40, 50, 6, 10, 0, max_speed): "t",
-                   (20, 30, 6, 10, 0, max_speed): "o"}   # "o" for "obstacle"
+    # speed_limit = 30
+
+    # label_func = {(40, 50, 6, 10, 0, max_speed): "t",
+    #                (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
+    # basic
+    # label_func = {(30, 40, 6, 10, 0, max_speed): "t",
+    #                (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
+    # overspeed test 1
+    speed_limit = 6
+    label_func = {(30, 40, 6, 10, 0, max_speed): "t",
+                   (20, 30, -2, 2, 0, max_speed): "o",  # "o" for "obstacle"
+                   (10, 20, -2, 10, speed_limit, max_speed): "s"}   # "s" for "overspeed"
     
     ego_state = np.array([0, 0, np.pi / 2, 0])
 
@@ -112,7 +116,7 @@ def main():
     safe_frag = LTL_Spec("G(~o)", AP_set=['o'])
     scltl_frag = LTL_Spec("F(t)", AP_set=['t'])
 
-    cost_func = {'o': 1}  
+    cost_func = {'o': 5, 's': 20}  
 
 
     # ---------- LP problem --------------------
@@ -122,22 +126,23 @@ def main():
     params = {"dt": 0.05, "WB": 1.5}
     mpc_con = MPC(params, horizon_steps=5)
 
-    
-
-
-
     # ---------- Visualization ---------------------
     fig, ax_1 = plt.subplots(1, 1, figsize=(10, 10))
     plt.axis('off')
     plt.axis('equal')
     vis = Visualizer(ax_1)
+    vis.set_velocity_params(speed_res)
 
     # ---------- Initialization --------------------
     # abs_state_env = 0
     abs_state_sys = abs_model.get_abs_state(ego_state) 
     # oppo_abs_state = abs_model.get_abs_state(init_oppo_car_pos)  
 
-    prod_state = (0, 1, 1)   # Initial product MDP state
+    # Initial product MDP state 
+    # (the first state does not matter;
+    #  the second state is the initial state of the cs DFA;
+    #  the third state is the initial state of the safety DFA)
+    prod_state = (0, 1, 1)   
 
     target_abs_state_sys = None
     occ_measure = None
@@ -293,7 +298,6 @@ def main():
             print("abs_state_sys:", abs_state_sys)
             print("decision:", sys_decision)
             delta_state = action_to_state_transition(sys_decision)
-            print("delta_state:", delta_state)
             target_abs_state_sys = abs_state_sys + delta_state
             
         target_ref = cal_target_ref(target_abs_state_sys, region_res, speed_res) 
@@ -316,7 +320,7 @@ def main():
         plt.gca().set_aspect(1)
         # vis.plot_grid(region_size, region_res, label_func, abs_state_env)
         vis.plot_grid(region_size, region_res, label_func)
-        vis.plot_car(ego_pos[0], ego_pos[1], ego_state[2], -control_input[1])
+        vis.plot_car(ego_state, -control_input[1])
         plt.pause(0.001)
 
         print("------------new iter-------------")
