@@ -99,14 +99,16 @@ def main():
 
     # label_func = {(40, 50, 6, 10, 0, max_speed): "t",
     #                (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
-    # basic
-    # label_func = {(30, 40, 6, 10, 0, max_speed): "t",
-    #                (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
-    # overspeed test 1
-    speed_limit = 6
+
+    #basic
     label_func = {(30, 40, 6, 10, 0, max_speed): "t",
-                   (20, 30, -2, 2, 0, max_speed): "o",  # "o" for "obstacle"
-                   (10, 20, -2, 10, speed_limit, max_speed): "s"}   # "s" for "overspeed"
+                   (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
+
+    # # overspeed test 1
+    # speed_limit = 6
+    # label_func = {(30, 40, 6, 10, 0, max_speed): "t",
+    #                (20, 30, -2, 2, 0, max_speed): "o",  # "o" for "obstacle"
+    #                (10, 20, -2, 10, speed_limit, max_speed): "s"}   # "s" for "overspeed"
     
     ego_state = np.array([0, 0, np.pi / 2, 0])
 
