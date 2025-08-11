@@ -118,8 +118,11 @@ def main():
     safe_frag = LTL_Spec("G(~o)", AP_set=['o'])
     scltl_frag = LTL_Spec("F(t)", AP_set=['t'])
 
-    cost_func = {'o': 5, 's': 20}  
+    # basic
+    cost_func = {'o': 5}  
 
+    # # overspeed test 1
+    # cost_func = {'o': 5, 's': 20}  
 
     # ---------- LP problem --------------------
     LP_prob = Risk_LTL_LP()
