@@ -9,7 +9,7 @@ class MPC:
         self.x_dim = 4
         self.u_dim = 2
 
-        self.v_bound = [0, 10]
+        self.v_bound = [0, 3]
         self.ephi_bound = [-np.pi / 2, np.pi / 2]
         
         self.a_bound = [-1, 1]

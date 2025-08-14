@@ -33,25 +33,23 @@ class Abstraction:
         r_bl = 0
         r_bu = int(route_size[0] / route_res[0])
         ey_bl = -(int(route_size[1] / route_res[1]) // 2)   # division by 2 due to two sides (left and right)
-        ey_bu = int(route_size[1] / route_res[1]) // 2 + 1   
-        
+        ey_bu = int(route_size[1] / route_res[1]) // 2 + 1
+
         # Velocity dimension
         v_bl = 0
         v_bu = int(speed_range / speed_res)  # Number of discrete velocity levels
-        
-        # Create grids for each dimension
-        grid_x = np.arange(r_bl, r_bu)
-        grid_y = np.arange(ey_bl, ey_bu)
-        grid_v = np.arange(v_bl, v_bu)
-        
-        # Create 3D meshgrid
-        X, Y, V = np.meshgrid(grid_x, grid_y, grid_v)
-        
-        # Update map_shape
-        self.map_shape = (len(grid_x), len(grid_y), len(grid_v))
-        
-        # Return 3D state array
-        return np.array([X.flatten(), Y.flatten(), V.flatten()]).T
+
+        # Save shape (R, EY, V)
+        self.map_shape = (r_bu - r_bl, ey_bu - ey_bl, v_bu - v_bl)
+
+        # Build state list without meshgrid, with r varying fastest, then ey, then v
+        # This matches P_sn.flatten(order='F') used in trans_func
+        states = []
+        for v in range(v_bl, v_bu):
+            for ey in range(ey_bl, ey_bu):
+                for r in range(r_bl, r_bu):
+                    states.append([r, ey, v])
+        return np.array(states)
 
 
     def gen_abs_action(self):
