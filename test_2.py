@@ -757,6 +757,8 @@ def main():
     #                (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
 
     #basic
+    # label_func = {(40, 50, 6, 10, 0, max_speed): "t",
+    #                (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
     label_func = {(40, 50, 6, 10, 0, max_speed): "t",
                    (20, 30, -2, 2, 0, max_speed): "o"}   # "o" for "obstacle"
 
@@ -843,9 +845,22 @@ def main():
             prod_state_index, prod_state  = prod_auto.update_prod_state(abs_state_sys_index, prod_state)
             occ_measure = LP_prob.solve(P_matrix, cost_map, prod_state_index,
                                         prod_auto.accepting_states, None)
+            # __import__('pickle').dump(occ_measure, open('occ_measure_new.pkl','wb'))
+            # # Also save in easy-to-compare CSV and JSON formats (sorted by keys)
+            # import csv, json
+            # sorted_items = sorted(occ_measure.items(), key=lambda kv: (kv[0][0], kv[0][1]))
+            # with open('occ_measure_new.csv', 'w', newline='') as f:
+            #     w = csv.writer(f)
+            #     w.writerow(['prod_state_idx', 'action_idx', 'value'])
+            #     for (s, a), v in sorted_items:
+            #         w.writerow([s, a, f"{float(v):.10f}"])
+            # with open('occ_measure_new.json', 'w') as f:
+            #     json.dump([
+            #         {'s': int(s), 'a': int(a), 'v': float(v)} for (s, a), v in sorted_items
+            #     ], f, indent=2)
             
-            print_position_transition_matrix(abs_model, True)
-            show_occ_measure(occ_measure, abs_model, prod_auto, prod_state_index)
+            # print_position_transition_matrix(abs_model, True)
+            # show_occ_measure(occ_measure, abs_model, prod_auto, prod_state_index)
             # print("occ_measure_length:", len(occ_measure))
             # print("occ_measure:", occ_measure)
             
