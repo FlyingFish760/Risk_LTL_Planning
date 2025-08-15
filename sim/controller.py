@@ -61,17 +61,22 @@ class MPC:
         cost = 0
         # Setup cost function and constraints
         for k in range(self.horizon):
-            cost = cost + (self.X[0, k] - self.X_ref[0]) ** 2 + \
-                    (self.X[1, k] - self.X_ref[1]) ** 2 + \
-                    (self.X[3, k] - self.X_ref[2]) ** 2
+            # State tracking cost
+            cost = cost + 1 * (self.X[0, k] - self.X_ref[0]) ** 2 + \
+                    1 * (self.X[1, k] - self.X_ref[1]) ** 2 + \
+                    2 * (self.X[3, k] - self.X_ref[2]) ** 2
+            
+            # # Control effort penalty to prevent aggressive control
+            # cost = cost + 1 * self.U[0, k] ** 2 + \
+            #         1 * self.U[1, k] ** 2
 
             # System dynamics as constraints
             st_next = self.X[:, k] + integrate_f(self.X[:, k], self.U[:, k]) * self.dt
             self.opti.subject_to(self.X[:, k + 1] == st_next)
             
             # Control bounds
-            # self.opti.subject_to(self.U[0, k] > self.a_bound[0])  
-            # self.opti.subject_to(self.U[0, k] < self.a_bound[1])  
+            self.opti.subject_to(self.U[0, k] > self.a_bound[0])  
+            self.opti.subject_to(self.U[0, k] < self.a_bound[1])  
             self.opti.subject_to(self.U[1, k] > self.deltaphi_bound[0])  
             self.opti.subject_to(self.U[1, k] < self.deltaphi_bound[1])  
             

@@ -200,11 +200,11 @@ class Visualizer:
         """
         # Calculate grid ranges for Frenet frame
         grid_r = np.arange(0, region_size[0]+region_res[0], region_res[0])
-        grid_ey = np.arange(-region_size[1]/2, region_size[1]/2+region_res[1], region_res[1])
+        grid_ey = np.arange(0, region_size[1]+region_res[1], region_res[1])
         
         # Draw vertical grid lines (constant r)
         for r in grid_r:
-            self.ax.plot([r, r], [-region_size[1]/2, region_size[1]/2], color='black')
+            self.ax.plot([r, r], [0, region_size[1]], color='black')
         
         # Draw horizontal grid lines (constant ey)
         for ey in grid_ey:
@@ -217,8 +217,8 @@ class Visualizer:
             # Clamp to region bounds
             r_bl = max(0, r_bl)
             r_bu = min(region_size[0], r_bu)
-            ey_bl = max(-region_size[1]/2, ey_bl)
-            ey_bu = min(region_size[1]/2, ey_bu)
+            ey_bl = max(0, ey_bl)
+            ey_bu = min(region_size[1], ey_bu)
             
             if label == 'c':
                 c = 'green' if traffic_light == 0 else 'red'
@@ -241,7 +241,7 @@ class Visualizer:
             
             # Set axis limits exactly to region bounds
             self.ax.set_xlim(0, region_size[0])
-            self.ax.set_ylim(-region_size[1]/2, region_size[1]/2)
+            self.ax.set_ylim(0, region_size[1])
             
             rect = plt.Rectangle((r_bl, ey_bl), r_bu-r_bl, ey_bu-ey_bl, color=c, alpha=a)
             self.ax.add_patch(rect)
