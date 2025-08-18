@@ -212,6 +212,10 @@ class Visualizer:
 
         # Plot labeled regions
         for region, label in label_func.items():
+            # Skip 'n' and 'h' labels - don't draw them
+            if label in ['n', 'h']:
+                continue
+                
             r_bl, r_bu, ey_bl, ey_bu, _, _ = region
             
             # Clamp to region bounds
