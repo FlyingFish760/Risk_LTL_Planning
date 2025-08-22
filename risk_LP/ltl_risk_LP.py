@@ -47,7 +47,13 @@ class Risk_LTL_LP:
 
                     d = calculate_distance((r_value, ey_value), (rn_value, eyn_value))
                     v_avg = (v_value + vn_value) / 2
-                    time = d / v_avg
+
+                    try:
+                        time = d / v_avg
+                    except ZeroDivisionError:
+                        print("!!!!!!!!!!!ZERO DIVISION COMPUTING TRANSITION TIME !!!!!!!!!!!!!!!1")
+                        time = float('inf')  
+
                     time *= TIME_SHRINK_RATE
                     
                     transition_time[(s, a, sn)] = time
