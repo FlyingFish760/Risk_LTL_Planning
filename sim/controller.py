@@ -12,7 +12,7 @@ class MPC:
         self.v_bound = [0, 8]
         self.ephi_bound = [-np.pi / 2, np.pi / 2]
         
-        self.a_bound = [-1, 1]
+        self.a_bound = [-2, 2]
         self.deltaphi_bound = [-1, 1]  
 
         self.dt = car_para['dt']

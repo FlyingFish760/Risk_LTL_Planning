@@ -3,6 +3,9 @@ import numpy as np
 from abstraction.abstraction import Abstraction
 from specification.specification import LTL_Spec
 
+NEG_SPEED_LABEL = "n"
+HIGH_SPEED_LABEL = "h"
+
 class Product:
     def __init__(self, MDP, DFA_cs, DFA_safe):
         self.MDP = MDP
@@ -53,14 +56,24 @@ class Product:
                 accepting_states.append(n)
         return accepting_states, trap_states
 
-    def gen_cost_map(self, cost_func):
+    def gen_cost_map(self, cost_func, abs_model):
+        def velocity_state_to_cost(v):
+            return v + 1
+
+        def get_velocity_state(mdp_state_ind):
+            return abs_model.state_set[mdp_state_ind][2]
+
         cost_map = np.zeros(len(self.prod_state_set))
         for n in self.trap_states:
             x, s_cs, s_s = self.prod_state_set[n]
             label = self.MDP.labelling[x]
-            for ap, cost in cost_func.items():
+            for ap, severity_rate in cost_func.items():
                 if ap in label:
-                    cost_map[n] += cost
+                    if ap == NEG_SPEED_LABEL or ap == HIGH_SPEED_LABEL:
+                        cost_map[n] += severity_rate
+                    else:
+                        velocity_state = get_velocity_state(x)
+                        cost_map[n] += severity_rate * velocity_state_to_cost(velocity_state)
         return cost_map
     
 

@@ -322,7 +322,7 @@ def main():
     region_size = (50, 20)
     region_res = (10,4)   # Now region_size[1]/region_res[1] must be odd
     max_speed = 8
-    speed_res = 4
+    speed_res = 2
 
     # static_label = {(15, 20, 15, 20): "t"}  
     # label_func = dyn_labelling(static_label, init_oppo_car_pos, [-1, 0])
@@ -343,34 +343,44 @@ def main():
     #                (20, 30, 8, 12, 0, max_speed): "o",  # "o" for "obstacle"
     #                (10, 20, 8, 20, speed_limit, max_speed): "s"}   # "s" for "overspeed"
 
-    # speed test 2
+    # # speed test 2
+    # speed_limit = 4
+    # speed_limit_2 = 4
+    # label_func = {(40, 50, 16, 20, 0, max_speed): "t",
+    #                (20, 30, 8, 12, 0, max_speed): "o",  # "o" for "obstacle"
+    #                (10, 20, 8, 20, speed_limit, max_speed): "s", # "s" for "speed"
+    #                (30, 40, 8, 20, 0, speed_limit): "s",
+    #                (0, 50, 0, 20, -speed_res, 0): "n",   # "n" for negative speed 
+    #                (0, 50, 0, 20, max_speed, max_speed + speed_res): "h"}   # "h" for too high speed
+
+    # speed test 3
     speed_limit = 4
     speed_limit_2 = 4
     label_func = {(40, 50, 16, 20, 0, max_speed): "t",
                    (20, 30, 8, 12, 0, max_speed): "o",  # "o" for "obstacle"
-                   (10, 30, 8, 20, speed_limit, max_speed): "s", # "s" for "speed"
+                   (10, 20, 8, 20, speed_limit, max_speed): "s", # "s" for "speed"
                    (30, 40, 8, 20, 0, speed_limit): "s",
-                   (0, 50, 0, 20, -speed_res, 0): "n",   # "n" for negative speed 
                    (0, 50, 0, 20, max_speed, max_speed + speed_res): "h"}   # "h" for too high speed
     
-    ego_state = np.array([0, 10, np.pi / 2, 3])
+    ego_state = np.array([0, 10, np.pi / 2, 5])
 
     abs_model = Abstraction(region_size, region_res, max_speed, speed_res, ego_state, label_func) 
 
     # ---------- Specification Define --------------------
+    # safe_frag = LTL_Spec("G(~o)", AP_set=['o'])
     # safe_frag = LTL_Spec("G(~o) & G(~s)", AP_set=['o', 's'])
-    safe_frag = LTL_Spec("G(~o) & G(~s) & G(~n) & G(~h)", AP_set=['o', 's', 'n', 'h'])
+    # safe_frag = LTL_Spec("G(~o) & G(~s) & G(~n) & G(~h)", AP_set=['o', 's', 'n', 'h'])
+    safe_frag = LTL_Spec("G(~o) & G(~s) & G(~h)", AP_set=['o', 's', 'h'])
     scltl_frag = LTL_Spec("F(t)", AP_set=['t'])
 
     # basic
+    # cost_func = {'o': 5}
     # cost_func = {'o': 5, 's': 5}  
-    cost_func = {'o': 5, 's': 5, 'n': 7, 'h': 7}  
+    # cost_func = {'o': 5, 's': 3, 'n': 30, 'h': 30}  
+    cost_func = {'o': 5, 's': 3, 'h': 30}  
 
     # # overspeed test 1
     # cost_func = {'o': 5, 's': 20}  
-
-    # ---------- LP problem --------------------
-    LP_prob = Risk_LTL_LP()
 
     # ---------- MPC --------------------
     params = {"dt": 0.05, "WB": 1.5}
@@ -403,9 +413,10 @@ def main():
     # mdp_prod = Prod_MDP(mdp_sys, mdp_env)
     # prod_auto = Product(mdp_prod.MDP, scltl_frag.dfa, safe_frag.dfa)
     prod_auto = Product(mdp_sys, scltl_frag.dfa, safe_frag.dfa)
-    P_matrix = prod_auto.prod_transitions
-    cost_map = prod_auto.gen_cost_map(cost_func)
+    LP_prob = Risk_LTL_LP(abs_model, prod_auto)
 
+    P_matrix = prod_auto.prod_transitions
+    cost_map = prod_auto.gen_cost_map(cost_func, abs_model)
     abs_state_sys = abs_model.get_abs_state(ego_state)
     abs_state_sys_index = abs_model.get_state_index(abs_state_sys)
     # oppo_abs_state = abs_model.get_abs_state(oppo_car_pos)

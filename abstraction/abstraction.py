@@ -28,14 +28,12 @@ class Abstraction:
         self.MDP = MDP(state_index_set, action_index_set, trans_matrix, label_map, initial_state_index)
 
     def gen_abs_state(self, route_size, route_res, speed_range, speed_res):
-        # Position dimensions
+        # Set state bounds
         r_bl = 0
         r_bu = int(route_size[0] / route_res[0])
         ey_bl = 0
         ey_bu = int(route_size[1] / route_res[1])
-
-        # Velocity dimension
-        v_bl = -1   
+        v_bl = 0   
         v_bu = int(speed_range / speed_res) + 1
 
         self.map_shape = (r_bu - r_bl, ey_bu - ey_bl, v_bu - v_bl)
@@ -45,6 +43,7 @@ class Abstraction:
             for ey in range(ey_bl, ey_bu):
                 for r in range(r_bl, r_bu):
                     states.append([r, ey, v])
+
         return np.array(states)
 
 

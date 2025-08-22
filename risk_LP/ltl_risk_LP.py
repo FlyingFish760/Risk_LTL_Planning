@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import gurobipy as grb
 import numpy as np
+import math
+
+TIME_SHRINK_RATE = 0.2
 
 OPTIONS = {
     "WLSACCESSID": "69fa444d-78b3-49c3-86b9-4836d12779cc",
@@ -10,13 +13,50 @@ OPTIONS = {
 
 class Risk_LTL_LP:
 
-    def __init__(self):
-        self.state_num = None
-        self.action_num = None
+    def __init__(self, abs_model, prod_auto):
+        self.state_num = len(prod_auto.prod_state_set)
+        self.action_num = len(prod_auto.prod_action_set)
+        self.transition_time = self.compute_transition_time(abs_model, prod_auto)
+
+    def compute_transition_time(self, abs_model, prod_auto):        
+        def calculate_distance(state, next_state):
+            r, ey = state
+            r_next, ey_next = next_state
+            return math.sqrt((r_next - r) ** 2 + (ey_next - ey) ** 2)
+
+        transition_time = {}
+
+        for s in range(self.state_num):
+            x, _, _ = prod_auto.prod_state_set[s]
+            r, ey, v = abs_model.state_set[x]
+            
+            # Convert state indices to continuous representative state values
+            r_value = r * abs_model.route_res[0] + abs_model.route_res[0] / 2
+            ey_value = ey * abs_model.route_res[1] + abs_model.route_res[1] / 2
+            v_value = v * abs_model.speed_res + abs_model.speed_res / 2
+
+            for a in range(self.action_num):
+                for sn in range(self.state_num):
+                    xn, _, _ = prod_auto.prod_state_set[sn]
+                    rn, eyn, vn = abs_model.state_set[xn]
+                    
+                    # Convert state indices to continuous representative state values
+                    rn_value = rn * abs_model.route_res[0] + abs_model.route_res[0] / 2
+                    eyn_value = eyn * abs_model.route_res[1] + abs_model.route_res[1] / 2
+                    vn_value = vn * abs_model.speed_res + abs_model.speed_res / 2
+
+                    d = calculate_distance((r_value, ey_value), (rn_value, eyn_value))
+                    v_avg = (v_value + vn_value) / 2
+                    time = d / v_avg
+                    time *= TIME_SHRINK_RATE
+                    
+                    transition_time[(s, a, sn)] = time
+                    
+        return transition_time
 
     def solve(self, P, c_map, initial_state, accept_states, initial_guess=None):
-        self.action_num = P.shape[1]  # number of actions
-        self.state_num = P.shape[0]  # number of states not in T
+        # self.action_num = P.shape[1]  # number of actions
+        # self.state_num = P.shape[0]  # number of states not in T
         S0 = initial_state  # The initial state
         gamma = 0.9 # discount factor
         th_hard = 5
@@ -34,6 +74,7 @@ class Risk_LTL_LP:
                 for a in range(self.action_num):
                     y[s, a].start = initial_guess[s, a]
 
+        # Flow balance constraint
         x = []
         for s in range(self.state_num):  # compute occupation
             x += [grb.quicksum(y[s, a] for a in range(self.action_num))]
@@ -41,8 +82,8 @@ class Risk_LTL_LP:
         xi = []
         for sn in range(self.state_num):  # compute incoming occupation
             # from s to s' sum_a x(s, a) P(s,a,s')
-            xi += [gamma * grb.quicksum(
-                   y[s, a] * P[s][a][sn] for a in range(self.action_num) for s in range(self.state_num))]
+            xi += [grb.quicksum(gamma ** self.transition_time[(s, a, sn)] * y[s, a] * P[s][a][sn] 
+                    for a in range(self.action_num) for s in range(self.state_num))]
 
         lhs = [x[i] - xi[i] for i in range(len(xi))]
         rhs = [0] * self.state_num
