@@ -15,6 +15,10 @@ from sim.controller import MPC
 from abstraction.prod_MDP import Prod_MDP
 from risk_LP.occ_measure_plot import plot_occ_measure
 
+# import csv
+# import datetime
+# import os
+
 
 SPEED_LOW_BOUND = 10
 
@@ -90,8 +94,13 @@ def main():
     # ---------- MPD System (Abstraction) --------------------
     region_size = (50, 20)
     region_res = (10,4)   # Now region_size[1]/region_res[1] must be odd
-    max_speed = 8
-    speed_res = 2
+    max_speed = 4
+    speed_res = 1
+
+    # region_size = (30, 30)
+    # region_res = (10,10)   # Now region_size[1]/region_res[1] must be odd
+    # max_speed = 3
+    # speed_res = 1
 
     # static_label = {(15, 20, 15, 20): "t"}  
     # label_func = dyn_labelling(static_label, init_oppo_car_pos, [-1, 0])
@@ -122,16 +131,30 @@ def main():
     #                (0, 50, 0, 20, -speed_res, 0): "n",   # "n" for negative speed 
     #                (0, 50, 0, 20, max_speed, max_speed + speed_res): "h"}   # "h" for too high speed
 
+    # # speed test 3
+    # speed_limit = 4
+    # speed_limit_2 = 4
+    # label_func = {(40, 50, 16, 20, 0, max_speed): "t",
+    #                (20, 30, 8, 12, 0, max_speed): "o",  # "o" for "obstacle"
+    #                (10, 20, 8, 20, speed_limit, max_speed): "s", # "s" for "speed"
+    #                (30, 40, 8, 20, 0, speed_limit): "s",
+    #                (0, 50, 0, 20, max_speed, max_speed + speed_res): "h"}   # "h" for too high speed
+
     # speed test 3
-    speed_limit = 4
-    speed_limit_2 = 4
+    speed_limit = 3
     label_func = {(40, 50, 16, 20, 0, max_speed): "t",
-                   (20, 30, 8, 12, 0, max_speed): "o",  # "o" for "obstacle"
-                   (10, 20, 8, 20, speed_limit, max_speed): "s", # "s" for "speed"
-                   (30, 40, 8, 20, 0, speed_limit): "s",
+                   (10, 50, 0, 20, speed_limit, max_speed): "s", # "s" for "speed"
                    (0, 50, 0, 20, max_speed, max_speed + speed_res): "h"}   # "h" for too high speed
     
-    ego_state = np.array([0, 10, np.pi / 2, 5])
+    ego_state = np.array([0, 10, 0, 0])
+
+    # # speed test 4
+    # speed_limit = 2
+    # label_func = {(20, 30, 20, 30, 0, max_speed): "t",
+    #                (10, 30, 0, 30, speed_limit, max_speed): "s", # "s" for "speed"
+    #                (0, 30, 0, 30, max_speed, max_speed + speed_res): "h"}   # "h" for too high speed
+    
+    # ego_state = np.array([0, 10, 0, 0])
 
     abs_model = Abstraction(region_size, region_res, max_speed, speed_res, ego_state, label_func) 
 
@@ -177,28 +200,40 @@ def main():
     occ_measure = None
     
     # ---------- Compute optimal policy --------------------
-    # abs_model = Abstraction(region_size, region_res, ego_pos, label_func)
     mdp_sys = abs_model.MDP
-    # mdp_prod = Prod_MDP(mdp_sys, mdp_env)
-    # prod_auto = Product(mdp_prod.MDP, scltl_frag.dfa, safe_frag.dfa)
     prod_auto = Product(mdp_sys, scltl_frag.dfa, safe_frag.dfa)
-    LP_prob = Risk_LTL_LP(abs_model, prod_auto)
 
-    P_matrix = prod_auto.prod_transitions
-    cost_map = prod_auto.gen_cost_map(cost_func, abs_model)
-    abs_state_sys = abs_model.get_abs_state(ego_state)
-    abs_state_sys_index = abs_model.get_state_index(abs_state_sys)
-    # oppo_abs_state = abs_model.get_abs_state(oppo_car_pos)
-    # state_sys_env_index = mdp_prod.get_prod_state_index((abs_state_sys_index, abs_state_env))
-    # prod_state_index, prod_state  = prod_auto.update_prod_state(state_sys_env_index, prod_state)
-    prod_state_index, prod_state  = prod_auto.update_prod_state(abs_state_sys_index, prod_state)
-    occ_measure = LP_prob.solve(P_matrix, cost_map, prod_state_index,
-                                prod_auto.accepting_states, None)
-
-    # print("occ_measure_invalid", occ_measure[])
+    # LP_prob = Risk_LTL_LP(abs_model, prod_auto)
+    # P_matrix = prod_auto.prod_transitions
+    # cost_map = prod_auto.gen_cost_map(cost_func, abs_model)
+    # abs_state_sys = abs_model.get_abs_state(ego_state)
+    # abs_state_sys_index = abs_model.get_state_index(abs_state_sys)
+    # prod_state_index, prod_state  = prod_auto.update_prod_state(abs_state_sys_index, prod_state)
+    # occ_measure = LP_prob.solve(P_matrix, cost_map, prod_state_index,
+    #                             prod_auto.accepting_states, None)
     # plot_occ_measure(occ_measure, prod_auto, abs_model)
-    optimal_policy, Z = LP_prob.extract(occ_measure)
 
+    # optimal_policy, Z = LP_prob.extract(occ_measure)
+    # np.save("optimal_policy_risk_aware2.npy", optimal_policy)
+
+    policy_path = "/home/student/Risk_LTL_Planning/optimal_policy_risk_aware2.npy"
+    optimal_policy = np.load(policy_path)
+
+    # # --- log directory ---
+    # log_dir = os.path.expanduser("~/ego_logs")   # goes into your home folder
+    # os.makedirs(log_dir, exist_ok=True)
+
+    # # --- timestamped file ---
+    # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    # log_filename = os.path.join(log_dir, f"ego_state_log_{timestamp}.csv")
+
+    # # --- create CSV with header immediately ---
+    # with open(log_filename, "w", newline="") as f:
+    #     writer = csv.writer(f)
+    #     writer.writerow(["time", "pos_x", "pos_y", "yaw", "velocity", "acce", "delta_theta"])
+
+    # # --- running time counter ---
+    # running_time = 0.0
     
     # -------------- Simulation Loop --------------------
     iter = 1
@@ -221,7 +256,7 @@ def main():
         
         # Make decision
         if ((not first_decision_made) or                      # The first decision is not made
-            (np.array_equal(abs_model.init_abs_state, target_abs_state_sys))):    # The ego vehicle state changes
+            (np.array_equal(abs_model.init_abs_state, target_abs_state_sys))):    # The ego vehicle finished the last action
             
             abs_state_sys = abs_model.get_abs_state(ego_state)
             abs_state_sys_index = abs_model.get_state_index(abs_state_sys)
@@ -248,8 +283,17 @@ def main():
 
 
         ego_state = sim.car_dyn(ego_state, control_input, params)
-        print("ego_state:", ego_state)
+        # print("ego_state:", ego_state)
         abs_model.update_abs_init_state(ego_state)
+
+        # # --- log to CSV ---
+        # with open(log_filename, "a", newline="") as f:
+        #     writer = csv.writer(f)
+        #     writer.writerow([running_time, ego_state[0], ego_state[1], ego_state[2], ego_state[3], control_input[0], control_input[1]])
+
+        # # --- update running time ---
+        # running_time += params["dt"]
+
 
         ego_pos = ego_state[:2]
         plt.gca().set_aspect(1)
@@ -258,7 +302,7 @@ def main():
         vis.plot_car(ego_state, -control_input[1])
         plt.pause(0.001)
 
-        print("------------new iter-------------")
+        # print("------------new iter-------------")
 
 
 

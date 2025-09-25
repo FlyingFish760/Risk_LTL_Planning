@@ -62,13 +62,19 @@ class MPC:
         # Setup cost function and constraints
         for k in range(self.horizon):
             # State tracking cost
-            cost = cost + 1 * (self.X[0, k] - self.X_ref[0]) ** 2 + \
-                    1 * (self.X[1, k] - self.X_ref[1]) ** 2 + \
-                    2 * (self.X[3, k] - self.X_ref[2]) ** 2
+            Q = ca.DM([1.0, 1.0, 2.0])
+            Q_rate = 5
+            Q *= Q_rate
+            cost = cost + Q[0] * (self.X[0, k] - self.X_ref[0]) ** 2 + \
+                    Q[1] * (self.X[1, k] - self.X_ref[1]) ** 2 + \
+                    Q[2] * (self.X[3, k] - self.X_ref[2]) ** 2
             
-            # # Control effort penalty to prevent aggressive control
-            # cost = cost + 1 * self.U[0, k] ** 2 + \
-            #         1 * self.U[1, k] ** 2
+            # Control input cost
+            R = ca.DM([1.0, 5.0])
+            R_rate = 1
+            R *= R_rate
+            cost = cost + R[0] * self.U[0, k] ** 2 + \
+                    R[1] * self.U[1, k] ** 2
 
             # System dynamics as constraints
             st_next = self.X[:, k] + integrate_f(self.X[:, k], self.U[:, k]) * self.dt
@@ -90,7 +96,12 @@ class MPC:
         self.opti.subject_to(self.X[:, 0] == self.X_0)  # initial condition
         # Solver configuration
         self.opti.minimize(cost)
-        opts = {'ipopt': {'print_level': 0}}
+        # opts = {'ipopt': {'print_level': 0}}
+        opts = {
+            "ipopt": {"print_level": 0},
+            "print_time": 0,     
+            "verbose": False    
+        }
         self.opti.solver('ipopt', opts)
 
 

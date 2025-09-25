@@ -6,8 +6,8 @@ import math
 TIME_SHRINK_RATE = 0.2
 
 OPTIONS = {
-    "WLSACCESSID": "69fa444d-78b3-49c3-86b9-4836d12779cc",
-    "WLSSECRET": "2d8c3a9f-e2c9-4286-99c1-99324224b9d8",
+    "WLSACCESSID": "952da8df-e828-4f6a-b568-0c68cfc686dd",
+    "WLSSECRET": "bbbfbb0b-0e79-4246-8854-883dfb4d7a55",
     "LICENSEID": 2659583,
 }
 

@@ -1,10 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+import os
+
+show_grid = True
+
 
 def plot_occ_measure(occ_measure, prod_auto, abs_model):
     '''
     Plot occmeasure of states and the occ measure of actions in each state
     '''
+    
+    # Set white background for plots
+    plt.rcParams['figure.facecolor'] = 'white'
+    plt.rcParams['axes.facecolor'] = 'white'
 
     ######## Plot positional occupation measure ########
     state_action_occ = {} 
@@ -35,6 +44,21 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
     r_max = max([r for (r, ey) in state_occ.keys()]) + 1
     ey_max = max([ey for (r, ey) in state_occ.keys()]) + 1
     
+    # Calculate adaptive font sizes based on grid size
+    total_cells = r_max * ey_max
+    if total_cells <= 20:  # Small grids
+        occupation_font_size = 14  # Bigger for occupation measure
+        action_font_size = 11
+    elif total_cells <= 50:  # Medium grids
+        occupation_font_size = 12  # Bigger for occupation measure
+        action_font_size = 9
+    elif total_cells <= 100:  # Large grids
+        occupation_font_size = 10  # Bigger for occupation measure
+        action_font_size = 7
+    else:  # Very large grids
+        occupation_font_size = 8  # Bigger for occupation measure
+        action_font_size = 5
+    
     # Create a grid for the heat map
     heat_map = np.zeros((ey_max, r_max))
     
@@ -44,16 +68,26 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
     
     # Create the plot
     plt.figure(figsize=(12, 8))
-    im = plt.imshow(heat_map, cmap='hot', interpolation='nearest', origin='lower')
+    im = plt.imshow(heat_map, cmap='YlOrRd', interpolation='nearest', origin='lower')
     plt.colorbar(im, label='Occupation Measure')
+    
+    # Add grid lines at cell boundaries and axis labels at cell centers
+    if show_grid:
+        # Grid lines at cell boundaries (between cells)
+        plt.gca().set_xticks(np.arange(-0.5, r_max, 1), minor=True)
+        plt.gca().set_yticks(np.arange(-0.5, ey_max, 1), minor=True)
+        plt.gca().grid(which='minor', alpha=0.5, color='black', linewidth=0.5)
+        
+    # Axis labels at cell centers (0, 1, 2, ...)
+    plt.gca().set_xticks(np.arange(0, r_max, 1), minor=False)
+    plt.gca().set_yticks(np.arange(0, ey_max, 1), minor=False)
     
     # Add value labels at each state with better visibility
     max_value = np.max(list(state_occ.values()))
     for (r, ey), occ_value in state_occ.items():
-        # Use white text with black outline for better visibility
-        plt.text(r, ey-0.3, f'{occ_value:.3f}', ha='center', va='center', 
-                color='red', fontsize=10, weight='bold',
-                )
+        plt.text(r, ey-0.3, f'{occ_value:.3f}', 
+                ha='center', va='center', color='black',
+                fontsize=occupation_font_size, weight='bold')
     
     # Add action arrows and labels for all actions in each state
     arrow_scale = 0.15
@@ -79,22 +113,28 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
                 dx, dy = arrow_scale, 0
                 action_label = "F"
             
-            # Determine color: blue for max action, red for others
-            arrow_color = 'green' if action_type == max_action_type else 'red'
-            text_color = 'green' if action_type == max_action_type else 'red'
+            # Determine color: green for max action, lighter blue for others
+            arrow_color = 'green' if action_type == max_action_type else 'lightblue'
+            text_color = 'green' if action_type == max_action_type else 'lightblue'
             
-            # Draw arrow if there's a clear direction
+            # Draw arrow if there's a clear direction (positioned to avoid text overlap)
             if dx != 0 or dy != 0:
-                plt.arrow(start_x, start_y, dx, dy, head_width=0.06, head_length=0.03, 
-                         fc=arrow_color, ec=arrow_color, alpha=0.7, linewidth=1.2)
+                # Position arrows further to the right, away from text
+                arrow_start_x = start_x - 0.2
+                arrow_start_y = start_y
+                # Make arrows shorter to fit better
+                arrow_dx = dx * 1
+                arrow_dy = dy * 1
+                plt.arrow(arrow_start_x, arrow_start_y, arrow_dx, arrow_dy, head_width=0.04, head_length=0.02, 
+                         fc=arrow_color, ec=arrow_color, alpha=0.8, linewidth=1.0)
                 
-                # Add action label and occupation value at the end of the arrow
-                plt.text(start_x + dx + 0.05, start_y + dy, f'{action_label}: {action_value:.2f}', 
-                        ha='left', va='center', color=text_color, fontsize=6, weight='bold')
+                # Add action label and occupation value to the left of the arrow
+                plt.text(start_x + dx - 0.15, start_y + dy, f'{action_label}: {action_value:.2f}', 
+                        ha='left', va='center', color=text_color, fontsize=action_font_size, weight='bold')
     
     plt.xlabel('r (longitudinal position)')
     plt.ylabel('ey (lateral position)')
-    plt.title('State Occupation Measure Heat Map with Action Directions')
+    plt.title('Positional Occupation Measure Heat Map with Actions')
     plt.show()
 
 
@@ -115,7 +155,7 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
         n_cols = min(3, n_velocities)  # Maximum 3 columns
         n_rows = (n_velocities + n_cols - 1) // n_cols  # Ceiling division
         
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(6*n_cols, 6*n_rows))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(5*n_cols, 5*n_rows))
         if n_velocities == 1:
             axes = [axes]
         elif n_rows == 1:
@@ -164,6 +204,21 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
             r_max = max([r for (r, ey) in state_occ_velocity.keys()]) + 1
             ey_max = max([ey for (r, ey) in state_occ_velocity.keys()]) + 1
             
+            # Calculate adaptive font sizes for velocity plots (reverse to smaller action font)
+            total_cells_velocity = r_max * ey_max
+            if total_cells_velocity <= 20:  # Small grids
+                velocity_occupation_font_size = 10
+                velocity_action_font_size = 7  # Back to smaller size
+            elif total_cells_velocity <= 50:  # Medium grids
+                velocity_occupation_font_size = 10
+                velocity_action_font_size = 6  # Back to smaller size
+            elif total_cells_velocity <= 100:  # Large grids
+                velocity_occupation_font_size = 6
+                velocity_action_font_size = 5  # Back to smaller size
+            else:  # Very large grids
+                velocity_occupation_font_size = 4
+                velocity_action_font_size = 4  # Back to smaller size
+            
             # Create a grid for the heat map
             heat_map_velocity = np.zeros((ey_max, r_max))
             
@@ -172,12 +227,24 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
                 heat_map_velocity[ey, r] = occ_value
             
             # Create the heat map on the subplot
-            im = ax.imshow(heat_map_velocity, cmap='hot', interpolation='nearest', origin='lower')
+            im = ax.imshow(heat_map_velocity, cmap='YlOrRd', interpolation='nearest', origin='lower')
+            
+            # Add grid lines at cell boundaries and axis labels at cell centers
+            if show_grid:
+                # Grid lines at cell boundaries (between cells)
+                ax.set_xticks(np.arange(-0.5, r_max, 1), minor=True)
+                ax.set_yticks(np.arange(-0.5, ey_max, 1), minor=True)
+                ax.grid(which='minor', alpha=0.5, color='black', linewidth=0.5)
+                
+            # Axis labels at cell centers (0, 1, 2, ...)
+            ax.set_xticks(np.arange(0, r_max, 1), minor=False)
+            ax.set_yticks(np.arange(0, ey_max, 1), minor=False)
             
             # Add value labels at each state with better visibility
             for (r, ey), occ_value in state_occ_velocity.items():
-                ax.text(r, ey-0.3, f'{occ_value:.3f}', ha='center', va='center', 
-                        color='red', fontsize=8, weight='bold')
+                ax.text(r, ey-0.3, f'{occ_value:.3f}', 
+                        ha='center', va='center', color='black',
+                        fontsize=velocity_occupation_font_size, weight='bold')
             
             # Add speed action labels for all actions in each state
             for (r, ey), action_occ in state_action_occ_velocity.items():
@@ -187,32 +254,37 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
                 else:
                     max_action_type = None
                 
-                # Position labels around the center of the cell
-                label_positions = {'a': (0.2, 0.2), 'd': (-0.2, 0.2), 'c': (0, 0.3)}
+                # Position actions in a vertical column at the center of the cell
+                action_order = ['a', 'c', 'd']  # Top to bottom order: accelerate, cruise, decelerate
                 
-                # Label all speed actions
-                for action_type, action_value in action_occ.items():
-                    action_label = ""
-                    if action_type == 'a':  # accelerate
-                        action_label = "A"
-                    elif action_type == 'd':  # decelerate
-                        action_label = "D"
-                    elif action_type == 'c':  # cruise
-                        action_label = "C"
-                    
-                    # Determine color: green for max action, red for others
-                    text_color = 'green' if action_type == max_action_type else 'red'
-                    
-                    # Get label position offset
-                    dx, dy = label_positions.get(action_type, (0, 0))
-                    
-                    # Add action label and occupation value
-                    ax.text(r + dx, ey + dy, f'{action_label}: {action_value:.2f}', 
-                            ha='center', va='center', color=text_color, fontsize=6, weight='bold')
+                # Label all speed actions in a column
+                action_index = 0
+                for action_type in action_order:
+                    if action_type in action_occ:
+                        action_value = action_occ[action_type]
+                        action_label = ""
+                        if action_type == 'a':  # accelerate
+                            action_label = "A"
+                        elif action_type == 'd':  # decelerate
+                            action_label = "D"
+                        elif action_type == 'c':  # cruise
+                            action_label = "C"
+                        
+                        # Determine color: green for max action, lighter blue for others
+                        text_color = 'green' if action_type == max_action_type else 'lightblue'
+                        
+                        # Position in column: start from top and go down
+                        column_y_offset = 0.25 - (action_index * 0.15)
+                        
+                        # Add action label and occupation value
+                        ax.text(r, ey + column_y_offset, f'{action_label}: {action_value:.2f}', 
+                                ha='center', va='center', color=text_color, fontsize=velocity_action_font_size, weight='bold')
+                        
+                        action_index += 1
             
-            ax.set_xlabel('r (longitudinal position)')
-            ax.set_ylabel('ey (lateral position)')
-            ax.set_title(f'Speed Actions at Velocity {v_val}')
+            # ax.set_xlabel('r (longitudinal position)')
+            # ax.set_ylabel('ey (lateral position)')
+            ax.set_title(f'Velocity Occupation measure at Velocity {v_val}', fontsize=10)
         
         # Hide unused subplots
         for idx in range(n_velocities, n_rows * n_cols):
@@ -228,3 +300,38 @@ def plot_occ_measure(occ_measure, prod_auto, abs_model):
         
         plt.tight_layout()
         plt.show()
+
+
+def load_and_plot(filename="latest_occupation_data.pkl"):
+    """Load saved occupation measure data and plot it"""
+    # Add parent directory to path to import from test_2
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.append(parent_dir)
+    
+    try:
+        from test_2 import load_occupation_measure
+        
+        print(f"Loading occupation measure data from: {filename}")
+        occ_measure, prod_auto, abs_model = load_occupation_measure(filename)
+        
+        print(f"Loaded {len(occ_measure)} occupation measure entries")
+        print("Generating plots...")
+        
+        plot_occ_measure(occ_measure, prod_auto, abs_model)
+        
+        print("Plotting complete!")
+        
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        print("Make sure you have run the main simulation first to generate the data file.")
+    except Exception as e:
+        print(f"Error loading or plotting data: {e}")
+
+
+if __name__ == "__main__":
+    # Allow filename to be passed as command line argument
+    filename = "latest_occupation_data.pkl"
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+    
+    load_and_plot(filename)
