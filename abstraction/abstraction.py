@@ -48,11 +48,6 @@ class Abstraction:
 
 
     def gen_abs_action(self):
-        # vx_set = np.array([-2, -1, 0, 1, 2])
-        # vy_set = np.array([-2, -1, 0, 1, 2])
-        # vx_set = np.array([-1, 0, 1])
-        # vy_set = np.array([-1, 0, 1])
-
         move_set = np.array(['l', 'f', 'r'])   # 'l' for 'left', 'f' for 'forward', 'r' for 'right'
         speed_set = np.array(['d', 'c', 'a'])  # 'd' for 'decelerate', 'c' for 'cruise', 'a' for 'accelerate'
         A, B = np.meshgrid(move_set, speed_set)
@@ -88,12 +83,6 @@ class Abstraction:
                     ey_bl_idx <= self.state_set[n, 1] < ey_bu_idx and 
                     v_bl_idx <= self.state_set[n, 2] < v_bu_idx):
                     label_map[n] = label if label_map[n] == '_' else label_map[n] + label
-        
-        # def sanity_gen_labels(label_map):
-        #     for i, label in enumerate(label_map):
-        #         if label != "_":
-        #             print(f"state {self.state_set[i]} has label {label}")
-        # sanity_gen_labels(label_map)
         
         return label_map
 
@@ -134,7 +123,6 @@ class Abstraction:
                 prob_spatial[3, 2] = 0.9  # r+1, ey+0
                 # Some uncertainty
                 prob_spatial[2, 2] = 0.1  # r+0, ey+0 (no movement)
-                # prob_spatial[4, 2] = 0.1 # r+2, ey+0 (more forward)
                 
             elif move_action == 'r':
                 # Primary transition: r+1, ey-1 (forward and right)
@@ -154,13 +142,11 @@ class Abstraction:
             if speed_action == 'a':
                 prob_v[3] = 0.9  # v+1
                 prob_v[2] = 0.1  # v+0 (failed acceleration)
-                # prob_v[4] = 0.1  # v+2 (over-acceleration)
             elif speed_action == 'c':  
                 prob_v[2] = 1.0  # v+0 (no velocity change)
             elif speed_action == 'd':  
                 prob_v[1] = 0.9  # v-1
                 prob_v[2] = 0.1  # v+0 (failed deceleration)
-                # prob_v[0] = 0.1  # v-2 (over-deceleration)
             
             return prob_v
         
@@ -200,9 +186,6 @@ class Abstraction:
                             v_idx = next_v - v_bl
 
                             P_sn[r_idx, ey_idx, v_idx] = prob_spatial[i, j] * prob_v[k]
-
-        # if np.array_equal(state, np.array([0, 2, 0])) and np.array_equal(action, np.array(['l', 'c'])): 
-        #     print("T(s, a, s'):", P_sn[1, 3, 1])
 
         return P_sn.flatten(order='F')
 

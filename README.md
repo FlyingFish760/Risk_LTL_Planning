@@ -1,68 +1,93 @@
-<p align="center">
-<h1 align="center"<strong> Risk-Aware Autonomous Driving with Linear Temporal Logic Specifications </strong>
-</h1>
-  <p align="center">
-    Shuhao Qi<sup>1</sup>, Zengjie Zhang <sup>1</sup>, Zhiyong Sun<sup>2</sup> and Sofie Haesaert<sup>1</sup>
-    <br>
-    <sup>1</sup> Eindhoven University of Technology <sup>2</sup> Peking University
-    <br>
-  </p>
-</p>
+# Graduation project code
+This code is for testing the risk-aware autonomous driving method of Jingyuan Han's graduation project. A speed limit experiment is implemented in the code.
 
-<p align="center">
-  <a href='https://arxiv.org/abs/2409.09769'>
-    <img src='https://img.shields.io/badge/Arxiv-2409.09769-A42C25?style=flat&logo=arXiv&logoColor=A42C25'></a>
-  <a href='https://www.youtube.com/watch?v=r5kEMW8oPQE'>
-    <img src='https://img.shields.io/youtube/views/r5kEMW8oPQE'></a>
-</p>
 
-## Overview
+## Code Structure
+Please refer to the .readme file in the main branch for an overview of the code structure.
 
-This repository provides a minimal example of the risk-aware planning framework proposed 
-in the paper: [ArXiv:2409.09769](https://arxiv.org/abs/2409.09769), without relying on Carla. 
-This example is designed to help users understand the proposed framework in a simplified setting.
 
-## Repository Structure
+## Prerequisites
 
-- `reactive_LTL_main.py` - Main script handling reactive Linear Temporal Logic (LTL) computations.
+### Dependencies
+Install the required Python packages:
 
-### Abstraction Module (`abstraction/`)
-- `abstraction.py` - Implements abstraction mechanisms for system modeling.
-- `MDP.py` - Defines a Markov Decision Process (MDP) abstraction.
-- `prod_MDP.py` - Implements a product MDP for combining different abstractions.
-
-### Risk-aware Linear Programming Module (`risk_LP/`)
-- `risk_LP.py` - Risk-aware linear programming (LP) problems.
-- `ltl_risk_LP.py` - Implements risk-aware LP methods under LTL constraints.
-- `prod_auto.py` - Construct product automaton.
-- `risk_field_plot.py` - Provides visualization tools for risk field data.
-
-### Simulation Module (`sim/`)
-- `simulator.py` - Simulates the environment and vehicle dynamic.
-- `perception.py` - Analog perception module to provide sensor information.
-- `visualizer.py` - PLot simulation results.
-- `controller.py` - Low-level MPC controller for the bicycle model.
-
-### Specification Module (`specification/`)
-- `specification.py` - Translate LTL specifications.
-- `DFA.py` - Define deterministic finite automata (DFA).
-
-## Getting Started
-
-### Prerequisites
-
-Ensure you have the following installed:
-- Python 3.x
-- Required dependencies: `Gurobi`, `numpy`, `matplotlib`, `networkx`, and `scipy`.
-
-### Quick Start
-
-Run the main script:
 ```bash
-python reactive_LTL_main.py
+pip install numpy matplotlib gurobipy
+pip install ltlf2dfa pygraphviz networkx
+pip install scipy casadi
 ```
 
-## License
+### Gurobi License
+This project uses Gurobi for optimization. You need:
+1. A valid Gurobi license (academic licenses are free)
+2. Set up your license credentials in `risk_LP/ltl_risk_LP.py`
 
-This project is licensed under the MIT License.
+## Usage
+
+### Quick Start
+Run the main experiment:
+```bash
+python experipment.py
+```
+
+### Online vs Offline Execution
+
+The system supports two execution modes:
+
+**Offline Mode (Recommended - Fast Startup)**
+- Uses pre-computed control policy: `optimal_policy_risk_aware2.npy`
+- Experiment starts immediately
+
+**Online Mode (Compute Policy Real-time)**
+- Computes control policy during runtime
+- Takes approximately 4 minutes to start
+
+**To switch modes:**
+- **Offline**: Ensure the policy path is filled in `experipment.py` (default)
+- **Online**: Comment out lines 117-118 and uncomment lines 105-115 in `experipment.py`
+
+### Configuration
+
+The main parameters can be configured in `experipment.py`:
+
+#### Environment (MDP) Setup
+```python
+# ---------- MPD(Abstraction) --------------------
+region_size = (50, 20)    # (length, width)
+region_res = (10, 4)      # Resolution (length, width)
+max_speed = 4             # Maximum velocity
+speed_res = 1             # Speed resolution
+```
+
+#### LTL Specifications
+```python
+#---------- Specification Define --------------------
+# Safety specification
+safe_frag = LTL_Spec("G(~s) & G(~h)", AP_set=['s', 'h'])
+
+# Mission specification
+scltl_frag = LTL_Spec("F(t)", AP_set=['t'])
+```
+
+#### Labels and Costs
+```python
+# Speed limit test
+speed_limit = 3
+label_func = {(40, 50, 16, 20, 0, max_speed): "t",   # "t" for target
+            (10, 50, 0, 20, speed_limit, max_speed): "s", # "s" for "speeding"
+            (0, 50, 0, 20, max_speed, max_speed + speed_res): "h"}   # "h" for too high speed
+
+cost_func = {'s': 3, 'h': 30}
+```
+
+## Related Work
+
+This implementation extends the methodology from:
+- [Risk-Aware Autonomous Driving with Linear Temporal Logic Specifications](https://github.com/Miracle-qi/Risk_LTL_Planning)
+- Paper: "Risk-Aware Autonomous Driving with Linear Temporal Logic Specifications" (arXiv:2409.09769)
+
+## Contact
+
+- **Jingyuan Han** - Eindhoven University of Technology (j.han@student.tue.nl)
+
 
